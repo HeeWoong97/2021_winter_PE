@@ -3,38 +3,34 @@
 
 #include <stdio.h>
 #include <pthread.h>
-// #include <vector>
 #include "vector.h"
 #include <unistd.h>
-// #include <atomic>
 
 typedef int bool;
 #define true    1
 #define false   0
 
-// extern thread_local long thread_index;
 extern __thread long thread_index;
 extern bool remove_dbg; // for only debug remove
 
 // #define DEBUG
-#ifdef DEBUG
-#define dbg_printf(fmt, ...) \
-        do {                 \
-            if (remove_dbg)  \
-                printf("T[%ld] %s line:%d %s():" fmt, thread_index, \
-                __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-        } while(0)
+// #ifdef DEBUG
+// #define dbg_printf(fmt, ...) \
+//         do {                 \
+//             if (remove_dbg)  \
+//                 printf("T[%ld] %s line:%d %s():" fmt, thread_index, \
+//                 __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+//         } while(0)
 
-#else
+// #else
 #define dbg_printf(...)
-#endif
+// #endif
 
 #define RED 0
 #define BLACK 1
 
 #define DEFAULT_MARKER -1
 
-// using namespace std;
 
 typedef struct tree_node_t
 {
@@ -45,7 +41,6 @@ typedef struct tree_node_t
     char color; // RED or BLACK
     bool is_leaf;
     bool is_root;
-    // atomic<bool> flag;
     bool flag;
     int marker;
 } tree_node;
@@ -87,8 +82,6 @@ bool is_in_local_area(tree_node *target_node);
 
 // insert related
 bool setup_local_area_for_insert(tree_node *x);
-// tree_node *move_inserter_up(tree_node *oldx, vector<tree_node *> &local_area);
-// tree_node *move_inserter_up(tree_node *oldx, tree_node **local_area);
 tree_node *move_inserter_up(tree_node *oldx, vector *local_area);
 
 // delete related

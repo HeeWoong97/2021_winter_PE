@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 
-// extern thread_local long thread_index;
 extern __thread long thread_index;
 
 /**
@@ -45,14 +44,12 @@ tree_node *rb_init(void)
  */
 void left_rotate(tree_node *root, tree_node *node)
 {
-    if (node->is_leaf)
-    {
+    if (node->is_leaf) {
         fprintf(stderr, "[ERROR] invalid rotate on NULL node.\n");
         exit(1);
     }
     
-    if (node->right_child->is_leaf)
-    {
+    if (node->right_child->is_leaf) {
         fprintf(stderr, 
                 "[ERROR] invalid rotate on node with NULL right child.\n");
         exit(1);
@@ -60,12 +57,10 @@ void left_rotate(tree_node *root, tree_node *node)
 
     tree_node *right_child = node->right_child;
     right_child->parent = node->parent;
-    if (is_left(node))
-    {
+    if (is_left(node)) {
         node->parent->left_child = right_child;
     }
-    else
-    {
+    else {
         node->parent->right_child = right_child;
     }
 
@@ -74,8 +69,7 @@ void left_rotate(tree_node *root, tree_node *node)
     node->right_child = right_child->left_child;
     right_child->left_child = node;
 
-    if (node->right_child)
-    {
+    if (node->right_child) {
         node->right_child->parent = node;
     }
     
@@ -87,14 +81,12 @@ void left_rotate(tree_node *root, tree_node *node)
  */
 void right_rotate(tree_node *root, tree_node *node)
 {
-    if (node->is_leaf)
-    {
+    if (node->is_leaf) {
         fprintf(stderr, "[ERROR] invalid rotate on NULL node.\n");
         exit(1);
     }
 
-    if (node->left_child->is_leaf)
-    {
+    if (node->left_child->is_leaf) {
         fprintf(stderr,
                 "[ERROR] invalid rotate on node with NULL left child.\n");
         exit(1);
@@ -102,12 +94,10 @@ void right_rotate(tree_node *root, tree_node *node)
 
     tree_node *left_child = node->left_child;
     left_child->parent = node->parent;
-    if (is_left(node))
-    {
+    if (is_left(node)) {
         node->parent->left_child = left_child;
     }
-    else
-    {
+    else {
         node->parent->right_child = left_child;
     }
     
@@ -116,8 +106,7 @@ void right_rotate(tree_node *root, tree_node *node)
     node->left_child = left_child->right_child;
     left_child->right_child = node;
 
-    if (node->left_child)
-    {
+    if (node->left_child) {
         node->left_child->parent = node;
     }
 
@@ -134,14 +123,12 @@ void tree_insert(tree_node *root, tree_node *new_node)
 
     // insert like any binary search tree
     bool expected = false;
-    // while (!root->flag.compare_exchange_weak(expected, true));
     while (!__sync_bool_compare_and_swap(&root->flag, expected, true));
 
     dbg_printf("[FLAG] get flag of 0x%lx\n", (unsigned long)root);
 
     // empty tree
-    if (root->left_child->is_leaf)
-    {
+    if (root->left_child->is_leaf) {
         free_node(root->left_child);
         new_node->flag = true;
         dbg_printf("[FLAG] set flag of 0x%lx\n", (unsigned long)new_node);
@@ -162,9 +149,7 @@ void tree_insert(tree_node *root, tree_node *new_node)
     tree_node *z = NULL;
     tree_node *curr_node = root->left_child;
     expected = false;
-    // if (!curr_node->flag.compare_exchange_strong(expected, true))
-    if (!__sync_bool_compare_and_swap(&curr_node->flag, expected, true))
-    {
+    if (!__sync_bool_compare_and_swap(&curr_node->flag, expected, true)) {
         dbg_printf("[FLAG] failed getting flag of 0x%lx\n", (unsigned long)curr_node);
         
         goto restart;
@@ -172,22 +157,17 @@ void tree_insert(tree_node *root, tree_node *new_node)
     dbg_printf("[FLAG] get flag of 0x%lx\n", (unsigned long)curr_node);
 
     
-    while (!curr_node->is_leaf)
-    {
+    while (!curr_node->is_leaf) {
         z = curr_node;
-        if (value > curr_node->value) /* go right */
-        {
+        if (value > curr_node->value) { /* go right */
             curr_node = curr_node->right_child;
         }
-        else /* go left */
-        {
+        else { /* go left */
             curr_node = curr_node->left_child;
         }
 
         expected = false;
-        // if (!curr_node->flag.compare_exchange_weak(expected, true))
-        if (!__sync_bool_compare_and_swap(&curr_node->flag, expected, true))
-        {
+        if (!__sync_bool_compare_and_swap(&curr_node->flag, expected, true)) {
             dbg_printf("[FLAG] failed getting flag of 0x%lx\n", (unsigned long)curr_node);
             dbg_printf("[FLAG] release flag of 0x%lx\n", (unsigned long)z);
             z->flag = false;// release z's flag
@@ -197,8 +177,7 @@ void tree_insert(tree_node *root, tree_node *new_node)
 
         dbg_printf("[FLAG] get flag of 0x%lx\n", (unsigned long)curr_node);
 
-        if (!curr_node->is_leaf)
-        {
+        if (!curr_node->is_leaf) {
             // release old curr_node's flag
             dbg_printf("[FLAG] release flag of 0x%lx\n", (unsigned long)z);
             z->flag = false;
@@ -206,8 +185,7 @@ void tree_insert(tree_node *root, tree_node *new_node)
     }
     
     new_node->flag = true;
-    if (!setup_local_area_for_insert(z))
-    {
+    if (!setup_local_area_for_insert(z)) {
         curr_node->flag = false;
         dbg_printf("[FLAG] release flag of %lu and %lu\n", (unsigned long)z, (unsigned long)curr_node);
         z->flag = false;
@@ -217,13 +195,11 @@ void tree_insert(tree_node *root, tree_node *new_node)
     // now the local area has been setup
     // insert the node
     new_node->parent = z;
-    if (value <= z->value)
-    {
+    if (value <= z->value) {
         free(z->left_child);
         z->left_child = new_node;
     }
-    else
-    {
+    else {
         free(z->right_child);
         z->right_child = new_node;
     }
@@ -258,46 +234,32 @@ void rb_insert(tree_node *root, int value)
     tree_node *parent, *uncle = NULL, *grandparent = NULL;
 
     parent = curr_node->parent;
-    // vector<tree_node *> local_area = {curr_node, parent};
-    // tree_node *local_area[4] = {curr_node, parent};
     vector local_area;
     vector_init(&local_area);
     vector_add(&local_area, curr_node);
     vector_add(&local_area, parent);
 
-    if (parent != NULL)
-    {
+    if (parent != NULL) {
         grandparent = parent->parent; 
     }
 
-    if (grandparent != NULL)
-    {
-        if (grandparent->left_child == parent)
-        {
+    if (grandparent != NULL) {
+        if (grandparent->left_child == parent) {
             uncle = grandparent->right_child;
         }
-        else
-        {
+        else {
             uncle = grandparent->left_child;
         }
     }
 
-    // local_area.push_back(uncle);
-    // local_area[2] = uncle;
     vector_add(&local_area, uncle);
-    // local_area.push_back(grandparent);
-    // local_area[3] = grandparent;
     vector_add(&local_area, grandparent);
 
-    if (is_root(root, curr_node))
-    {
+    if (is_root(root, curr_node)) {
         curr_node->color = BLACK;
-        // for (auto node:local_area)
-        for (int i = 0; i < vector_total(&local_area); i++)
-        {
+        for (int i = 0; i < vector_total(&local_area); i++) {
             tree_node *node = vector_get(&local_area, i);
-            if (node != NULL) 
-            {
+            if (node != NULL)  {
                 dbg_printf("[FLAG] release flag of %lu\n", (unsigned long)node);
                 node->flag = false;
             }
@@ -306,25 +268,21 @@ void rb_insert(tree_node *root, int value)
         return;
     }
 
-    while (true)
-    {
-        if (is_root(root, curr_node)) // trivial case 1
-        {
+    while (true) {
+        if (is_root(root, curr_node)) { // trivial case 1
             curr_node->color = BLACK;
             break;
         }
         
         parent = curr_node->parent;
 
-        if (parent->color == BLACK) // trivial case 2
-        {
+        if (parent->color == BLACK) { // trivial case 2
             break;
         }
         
         uncle = get_uncle(curr_node);
 
-        if (parent->color == RED && uncle->color == RED) /* case 1 */
-        {
+        if (parent->color == RED && uncle->color == RED) { /* case 1 */
             parent->color = BLACK;
             uncle->color = BLACK;
             // curr_node = parent->parent;
@@ -334,10 +292,8 @@ void rb_insert(tree_node *root, int value)
             continue;
         }
 
-        if (is_left(parent))
-        {
-            switch (is_left(curr_node))
-            {
+        if (is_left(parent)) {
+            switch (is_left(curr_node)) {
             case false:
                 left_rotate(root, parent);
                 curr_node = parent;
@@ -352,10 +308,8 @@ void rb_insert(tree_node *root, int value)
             }
             break;
         }
-        else // parent is the right child of its parent
-        {
-            switch (is_left(curr_node))
-            {
+        else { // parent is the right child of its parent
+            switch (is_left(curr_node)) {
             case true:
                 right_rotate(root, parent);
                 curr_node = parent;
@@ -373,18 +327,17 @@ void rb_insert(tree_node *root, int value)
     }
 
     // release flags of all nodes in local_area
-    // for (auto node : local_area)
-    for (int i = 0; i < vector_total(&local_area); i++)
-    {
+    for (int i = 0; i < vector_total(&local_area); i++) {
         tree_node *node = vector_get(&local_area, i);
-        if (node != NULL)
-        {
+        if (node != NULL) {
             dbg_printf("[FLAG] release flag of %lu\n", (unsigned long)node);
             node->flag = false;
         }
     }
     
     dbg_printf("[Insert] rb fixup complete.\n");
+    vector_clear(&local_area);
+    vector_free(&local_area);
 }
 
 /**
@@ -407,8 +360,7 @@ restart:;
     else
         y = par_find_successor(z);
     
-    if (y == NULL)
-    {
+    if (y == NULL) {
         z->flag = false;
         goto restart;
     }
@@ -416,8 +368,7 @@ restart:;
     // we now hold the flag of y(delete_node) AND of z(node)
 
     // set up for local area delete, also four markers above
-    if (!setup_local_area_for_delete(y, z))
-    {
+    if (!setup_local_area_for_delete(y, z)) {
         // release flags
         y->flag = false;
         if (y != z) z->flag = false;
@@ -433,8 +384,7 @@ restart:;
         z->value = y->value;
     
     // release z's flag safely
-    if (!is_in_local_area(z))
-    {
+    if (!is_in_local_area(z)) {
         z->flag = false;
         dbg_printf("[Flag] release %d\n", z->value);
     }
@@ -461,14 +411,11 @@ tree_node *rb_remove_fixup(tree_node *root,
                            tree_node *node,
                            tree_node *z)
 {
-    while (!is_root(root, node) && node->color == BLACK)
-    {
+    while (!is_root(root, node) && node->color == BLACK) {
         tree_node *brother_node;
-        if (is_left(node))
-        {
+        if (is_left(node)) {
             brother_node = node->parent->right_child;
-            if (brother_node->color == RED) // case 1
-            {
+            if (brother_node->color == RED) { // case 1
                 brother_node->color = BLACK;
                 node->parent->color = RED;
                 left_rotate(root, node->parent);
@@ -479,15 +426,13 @@ tree_node *rb_remove_fixup(tree_node *root,
             } // case 1 will definitely turn into case 2
 
             if (brother_node->left_child->color == BLACK &&
-                brother_node->right_child->color == BLACK) // case 2
-            {
+                brother_node->right_child->color == BLACK) { // case 2
                 brother_node->color = RED;
                 node = move_deleter_up(node);
                 dbg_printf("[Remove] case2 done.\n");
             }
 
-            else if (brother_node->right_child->color == BLACK) // case 3
-            {
+            else if (brother_node->right_child->color == BLACK) { // case 3
                 brother_node->left_child->color = BLACK;
                 brother_node->color = RED;
                 right_rotate(root, brother_node);
@@ -497,8 +442,7 @@ tree_node *rb_remove_fixup(tree_node *root,
                 dbg_printf("[Remove] case3 done.\n");
             }
 
-            else // case 4
-            {
+            else { // case 4
                 brother_node->color = node->parent->color;
                 node->parent->color = BLACK;
                 brother_node->right_child->color = BLACK;
@@ -509,11 +453,9 @@ tree_node *rb_remove_fixup(tree_node *root,
                 break;
             }
         }
-        else // mirror case of the above
-        {
+        else { // mirror case of the above
             brother_node = node->parent->left_child;
-            if (brother_node->color == RED)
-            {
+            if (brother_node->color == RED) {
                 brother_node->color = BLACK;
                 node->parent->color = RED;
                 right_rotate(root, node->parent);
@@ -524,15 +466,13 @@ tree_node *rb_remove_fixup(tree_node *root,
             }
 
             if (brother_node->left_child->color == BLACK &&
-                     brother_node->right_child->color == BLACK)
-            {
+                     brother_node->right_child->color == BLACK) {
                 brother_node->color = RED;
                 node = move_deleter_up(node);
                 dbg_printf("[Remove] case2 done.\n");
             }
 
-            else if (brother_node->left_child->color == BLACK) // case 3
-            {
+            else if (brother_node->left_child->color == BLACK) { // case 3
                 brother_node->right_child->color = BLACK;
                 brother_node->color = RED;
                 left_rotate(root, brother_node);
@@ -542,8 +482,7 @@ tree_node *rb_remove_fixup(tree_node *root,
                 dbg_printf("[Remove] case3 done.\n");
             }
 
-            else // case 4
-            {
+            else { // case 4
                 brother_node->color = node->parent->color;
                 node->parent->color = BLACK;
                 brother_node->left_child->color = BLACK;

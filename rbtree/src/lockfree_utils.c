@@ -37,7 +37,8 @@ void clear_local_area(void)
                     node->value, (unsigned long)node, (int)node->flag);
         }
     }
-    vector_resize(&nodes_own_flag, 0);
+    vector_clear(&nodes_own_flag);
+    // vector_free(&nodes_own_flag);
 }
 
 /**
@@ -530,7 +531,7 @@ restart:
     newx->parent->marker = DEFAULT_MARKER;
 
     // new local area
-    vector_resize(&nodes_own_flag, 0);
+    vector_clear(&nodes_own_flag);
     vector_add(&nodes_own_flag, newx);
     vector_add(&nodes_own_flag, neww);
     vector_add(&nodes_own_flag, newp);
@@ -579,7 +580,7 @@ void fix_up_case1(tree_node *x, tree_node *w)
                 w->left_child->value, w->right_child->value);
 
     // new local area
-    vector_resize(&nodes_own_flag, 0);
+    vector_clear(&nodes_own_flag);
     vector_add(&nodes_own_flag, x);
     vector_add(&nodes_own_flag, x->parent);
     vector_add(&nodes_own_flag, w);
@@ -620,7 +621,7 @@ void fix_up_case3(tree_node *x, tree_node *w)
                 oldwrc->value, w->left_child->value);
 
     // new local area
-    vector_resize(&nodes_own_flag, 0);
+    vector_clear(&nodes_own_flag);
     vector_add(&nodes_own_flag, x);
     vector_add(&nodes_own_flag, x->parent);
     vector_add(&nodes_own_flag, w);
@@ -663,7 +664,7 @@ void fix_up_case1_r(tree_node *x, tree_node *w)
     dbg_printf("[Flag] get new %d %d\n",
                w->left_child->value, w->right_child->value);
     // new local area
-    vector_resize(&nodes_own_flag, 0);
+    vector_clear(&nodes_own_flag);
     vector_add(&nodes_own_flag, x);
     vector_add(&nodes_own_flag, x->parent);
     vector_add(&nodes_own_flag, w);
@@ -699,7 +700,7 @@ void fix_up_case3_r(tree_node *x, tree_node *w)
     dbg_printf("[Flag] release %d, get %d\n",
                oldwlc->value, w->right_child->value);
     // new local area
-    vector_resize(&nodes_own_flag, 0);
+    vector_clear(&nodes_own_flag);
     vector_add(&nodes_own_flag, x);
     vector_add(&nodes_own_flag, x->parent);
     vector_add(&nodes_own_flag, w);
@@ -761,7 +762,6 @@ bool setup_local_area_for_insert(tree_node *x)
 /**
  * Move up the target node
  */
-// tree_node *move_inserter_up(tree_node *oldx, vector<tree_node *> &local_area)
 tree_node *move_inserter_up(tree_node *oldx, vector *local_area)
 {
     tree_node *oldp = oldx->parent;

@@ -17,6 +17,7 @@ void vector_add(vector *v, void *item);
 void vector_set(vector *v, int index, void *item);
 void *vector_get(vector *v, int index);
 void vector_delete(vector *v, int index);
+void vector_clear(vector *v);
 void vector_free(vector *v);
 
 #endif

@@ -71,6 +71,13 @@ void vector_delete(vector *v, int index)
     }
 }
 
+void vector_clear(vector *v)
+{
+    for (int i = 0; i < vector_total(v); i++) {
+        vector_delete(v, i);
+    }
+}
+
 void vector_free(vector *v)
 {
     free(v->items);

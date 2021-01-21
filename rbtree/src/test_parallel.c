@@ -1,29 +1,20 @@
 #include "tree.h"
 
-// #include <iostream>
-// #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
-// #include <vector>
 #include "vector.h"
-// #include <iomanip>
 
 // #define COMPUTATION_TIME_SEC 0.3  // in sec
 // #define COMPUTATION_TIME_USEC COMPUTATION_TIME_SEC * 1000000    // in usec
 
-// using namespace std;
-
-// vector<int> THREADS_NUM_LIST = {1, 2, 4, 8, 16};
 vector THREADS_NUM_LIST;
 
-// vector<float> COMPUTATION_TIME_LIST = {0, 0.000001, 0.00001, 0.0001, 0.001};
 vector COMPUTATION_TIME_LIST;
 
-// vector<vector<double>> test_time_list;
 vector test_time_list;
 
 int total_size = 0, size_per_thread = 0;
@@ -62,28 +53,22 @@ int main(int argc, char **argv)
     // test settings
     int num_processes_i = 1;
     int num_processes_r = 1;
-    if (argc == 2)
-    {
+    if (argc == 2) {
         num_processes_i = atoi(argv[1]);
         num_processes_r = num_processes_i;
     }
-    else if (argc == 3)
-    {
+    else if (argc == 3) {
         num_processes_i = atoi(argv[1]);
         num_processes_r = atoi(argv[2]);
     }
 
     load_data_from_txt();
     printf("total_size: %d\n", total_size);
-    // for (auto comp_time : COMPUTATION_TIME_LIST)
-    for (int i = 0; i < vector_total(&COMPUTATION_TIME_LIST); i++)
-    {
+    for (int i = 0; i < vector_total(&COMPUTATION_TIME_LIST); i++) {
         float comp_time = *((float *)vector_get(&COMPUTATION_TIME_LIST, i));
         sleep_time = comp_time * 1000000;
         
-        // for (auto thread_num : THREADS_NUM_LIST)
-        for (int j = 0; j < vector_total(&THREADS_NUM_LIST); j++)
-        {
+        for (int j = 0; j < vector_total(&THREADS_NUM_LIST); j++) {
             int thread_num = *((int *)vector_get(&THREADS_NUM_LIST, j));
             num_processes_r = num_processes_i = thread_num;
             // init setup
@@ -97,8 +82,14 @@ int main(int argc, char **argv)
 
         printf("\n");
     }
-    
 
+    vector_clear(&THREADS_NUM_LIST);
+    vector_clear(&COMPUTATION_TIME_LIST);
+    vector_clear(&test_time_list);
+    
+    vector_free(&THREADS_NUM_LIST);
+    vector_free(&COMPUTATION_TIME_LIST);
+    vector_free(&test_time_list);
     
     // root = rb_init();
     // pthread_mutex_init(&show_tree_lock, NULL);
@@ -120,24 +111,20 @@ void run_serial()
 
 
     clock_gettime(CLOCK_MONOTONIC, &start);
-    for (int i = 0; i < total_size; i++)
-    {
+    for (int i = 0; i < total_size; i++) {
         rb_insert(root, numbers[i]);
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_time = (end.tv_sec - start.tv_sec) * 1e9;
     elapsed_time += (end.tv_nsec - start.tv_nsec);
     elapsed_time *= 1e-9;
-    // cout << "time taken by insert with 1 threads: " << fixed << elapsed_time << "sec" << endl;
-    // cout.unsetf(std::ios_base::floatfield);
     printf("time taken by insert with 1 threads: %lfsec\n", elapsed_time);
 
     remove_dbg = false;
     dbg_printf("\n\n\n");
 
     clock_gettime(CLOCK_MONOTONIC, &start);
-    for (int i = 0; i < total_size; i++)
-    {
+    for (int i = 0; i < total_size; i++) {
         rb_remove(root, numbers[i]);
         // show_tree(root);
     }
@@ -145,8 +132,6 @@ void run_serial()
     elapsed_time = (end.tv_sec - start.tv_sec) * 1e9;
     elapsed_time += (end.tv_nsec - start.tv_nsec);
     elapsed_time *= 1e-9;
-    // cout << "time taken by delete with 1 threads: " << fixed << elapsed_time << "sec" << endl;
-    // cout.unsetf(std::ios_base::floatfield);
     printf("time taken by insert with 1 threads: %lfsec\n", elapsed_time);
 }
 
@@ -156,8 +141,7 @@ void *run_insert(void *i)
     thread_index_init((long) i);
     int *start = p;
     int count = size_per_thread;
-    for (int i = 0; i < count; i++)
-    {
+    for (int i = 0; i < count; i++) {
         int element = start[i];
         rb_insert(root, element);
         usleep(sleep_time);
@@ -176,14 +160,12 @@ int run_multi_thread_insert(int thread_count)
     clock_gettime(CLOCK_MONOTONIC, &start);
     
     thread_count--; // main thread will also perform insertion
-    for (int i = 0; i < thread_count; i++)
-    {
+    for (int i = 0; i < thread_count; i++) {
         pthread_create(&tid[i], NULL, run_insert, (void *)(i + 1));
     }
 
     run_insert(0);
-    for (int i = 0; i < thread_count; i++)
-    {
+    for (int i = 0; i < thread_count; i++) {
         pthread_join(tid[i], NULL);
     }
 
@@ -191,8 +173,6 @@ int run_multi_thread_insert(int thread_count)
     double elapsed_time = (end.tv_sec - start.tv_sec) * 1e9;
     elapsed_time += (end.tv_nsec - start.tv_nsec);
     elapsed_time *= 1e-9;
-    // cout << "time taken by insert with " << thread_count + 1 << " threads and sleep " << (float)sleep_time / 1000000 << " seconds: " << fixed << elapsed_time << "sec" << endl;
-    // cout.unsetf(std::ios_base::floatfield);
     printf("time taken by insert with %d thread and sleep %f seconds: %lf sec\n", thread_count + 1, (float)sleep_time / 1000000, elapsed_time);
 
     // show_tree(root);
@@ -205,8 +185,7 @@ void *run_remove(void *i)
     thread_index_init((long)i);
     int *start = p;
     int count = size_per_thread;
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         int element = start[j];
         rb_remove(root, element);
         usleep(sleep_time);
@@ -226,14 +205,12 @@ int run_multi_thread_remove(int thread_count)
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     thread_count--; // main thread will also perform insertion
-    for (int i = 0; i < thread_count; i++)
-    {
+    for (int i = 0; i < thread_count; i++) {
         pthread_create(&tid[i], NULL, run_remove, (void *)(i + 1));
     }
 
     run_remove(0);
-    for (int i = 0; i < thread_count; i++)
-    {
+    for (int i = 0; i < thread_count; i++) {
         pthread_join(tid[i], NULL);
     }
 
@@ -241,8 +218,6 @@ int run_multi_thread_remove(int thread_count)
     double elapsed_time = (end.tv_sec - start.tv_sec) * 1e9;
     elapsed_time += (end.tv_nsec - start.tv_nsec);
     elapsed_time *= 1e-9;
-    // cout << "time taken by remove with " << thread_count + 1 << " threads and sleep " << (float)sleep_time / 1000000 << " seconds: " << fixed << elapsed_time << "sec" << endl;
-    // cout.unsetf(std::ios_base::floatfield);
     printf("time taken by remove with %d thread and sleep %f seconds: %lf sec\n", thread_count + 1, (float)sleep_time / 1000000, elapsed_time);
 
     // show_tree(root);
@@ -252,20 +227,14 @@ int run_multi_thread_remove(int thread_count)
 void load_data_from_txt()
 {
     char buffer[20];
-    // fstream file;
-    // file.open("data.txt", ios::in);
     FILE *file = fopen("data.txt", "r");
     total_size = 0;
-    // while(!file.eof())
-    while (!feof(file))
-    {
-        // file.getline(buffer, 20, '\n');
+    while (!feof(file)) {
         fgets(buffer, 20, file);
         buffer[strlen(buffer) - 1] = '\0';
 
         int result = strtol(buffer, NULL, 10);
-        if (result > 0)
-        {
+        if (result > 0) {
             numbers[total_size++] = result;
         }
     }
