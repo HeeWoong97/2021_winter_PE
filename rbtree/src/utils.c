@@ -1,7 +1,8 @@
 #include "tree.h"
 
 #include <stdlib.h>
-#include "vector.h"
+// #include "vector.h"
+#include "vector_arr.h"
 
 /******************
  * helper function

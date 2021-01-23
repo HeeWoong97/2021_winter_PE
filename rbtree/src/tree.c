@@ -337,7 +337,7 @@ void rb_insert(tree_node *root, int value)
     
     dbg_printf("[Insert] rb fixup complete.\n");
     vector_clear(&local_area);
-    vector_free(&local_area);
+    // vector_free(&local_area);
 }
 
 /**

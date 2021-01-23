@@ -6,7 +6,8 @@
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
-#include "vector.h"
+// #include "vector.h"
+#include "vector_arr.h"
 
 // #define COMPUTATION_TIME_SEC 0.3  // in sec
 // #define COMPUTATION_TIME_USEC COMPUTATION_TIME_SEC * 1000000    // in usec
@@ -38,8 +39,10 @@ int main(int argc, char **argv)
     // vector init
     int threads_num1 = 1, threads_num2 = 2, threads_num3 = 4, threads_num4 = 8, threads_num5 = 16;
     vector_init(&THREADS_NUM_LIST);
-    vector_add(&THREADS_NUM_LIST, &threads_num1); vector_add(&THREADS_NUM_LIST, &threads_num2); 
-    vector_add(&THREADS_NUM_LIST, &threads_num3); vector_add(&THREADS_NUM_LIST, &threads_num4); 
+    vector_add(&THREADS_NUM_LIST, &threads_num1); 
+    vector_add(&THREADS_NUM_LIST, &threads_num2); 
+    vector_add(&THREADS_NUM_LIST, &threads_num3); 
+    vector_add(&THREADS_NUM_LIST, &threads_num4); 
     vector_add(&THREADS_NUM_LIST, &threads_num5);
 
     float com_time1 = 0, com_time2 = 0.000001, com_time3 = 0.00001, com_time4 = 0.0001, com_time5 = 0.001;
@@ -87,9 +90,9 @@ int main(int argc, char **argv)
     vector_clear(&COMPUTATION_TIME_LIST);
     vector_clear(&test_time_list);
     
-    vector_free(&THREADS_NUM_LIST);
-    vector_free(&COMPUTATION_TIME_LIST);
-    vector_free(&test_time_list);
+    // vector_free(&THREADS_NUM_LIST);
+    // vector_free(&COMPUTATION_TIME_LIST);
+    // vector_free(&test_time_list);
     
     // root = rb_init();
     // pthread_mutex_init(&show_tree_lock, NULL);
@@ -229,8 +232,7 @@ void load_data_from_txt()
     char buffer[20];
     FILE *file = fopen("data.txt", "r");
     total_size = 0;
-    while (!feof(file)) {
-        fgets(buffer, 20, file);
+    while (fgets(buffer, 20, file) != NULL) {
         buffer[strlen(buffer) - 1] = '\0';
 
         int result = strtol(buffer, NULL, 10);

@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include "vector.h"
+// #include "vector.h"
+#include "vector_arr.h"
 #include <unistd.h>
 
 typedef int bool;
@@ -13,18 +14,18 @@ typedef int bool;
 extern __thread long thread_index;
 extern bool remove_dbg; // for only debug remove
 
-// #define DEBUG
-// #ifdef DEBUG
-// #define dbg_printf(fmt, ...) \
-//         do {                 \
-//             if (remove_dbg)  \
-//                 printf("T[%ld] %s line:%d %s():" fmt, thread_index, \
-//                 __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-//         } while(0)
+#define DEBUG
+#ifdef DEBUG
+#define dbg_printf(fmt, ...) \
+        do {                 \
+            if (remove_dbg)  \
+                printf("T[%ld] %s line:%d %s():" fmt, thread_index, \
+                __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+        } while(0)
 
-// #else
+#else
 #define dbg_printf(...)
-// #endif
+#endif
 
 #define RED 0
 #define BLACK 1

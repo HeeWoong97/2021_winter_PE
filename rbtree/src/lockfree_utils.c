@@ -2,7 +2,8 @@
 
 #include <stdlib.h>
 #include <pthread.h>
-#include "vector.h"
+// #include "vector.h"
+#include "vector_arr.h"
 #include <sys/types.h>
 
 /******************
@@ -31,11 +32,11 @@ void clear_local_area(void)
     dbg_printf("[Flag] Clear\n");
     for (int i = 0; i < vector_total(&nodes_own_flag); i++) {
         tree_node *node = vector_get(&nodes_own_flag, i);
-        if (node != NULL) {
+        // if (node != NULL) {
             node->flag = false;
             dbg_printf("[Flag]      %d, 0x%lx, %d\n",
                     node->value, (unsigned long)node, (int)node->flag);
-        }
+        // }
     }
     vector_clear(&nodes_own_flag);
     // vector_free(&nodes_own_flag);
@@ -48,9 +49,9 @@ bool is_in_local_area(tree_node *target_node)
 {
     for (int i = 0; i < vector_total(&nodes_own_flag); i++) {
         tree_node *node = vector_get(&nodes_own_flag, i);
-        if (node != NULL) {
+        // if (node != NULL) {
             if (node == target_node) return true;        
-        }
+        // }
     }
     
     return false;
@@ -607,10 +608,10 @@ void fix_up_case3(tree_node *x, tree_node *w)
     // clear all the markers within old local area
     for (int i = 0; i < vector_total(&nodes_own_flag); i++) {
         tree_node *node = vector_get(&nodes_own_flag, i);
-        if (node != NULL) {
+        // if (node != NULL) {
             // node->marker = DEFAULT_MARKER;
             node->marker = DEFAULT_MARKER;
-        }
+        // }
     }
     // get the flag of the new wlc & wrc
     // this will always be valid because of markers
@@ -686,10 +687,10 @@ void fix_up_case3_r(tree_node *x, tree_node *w)
     // clear all the markers within old local area
     for (int i = 0; i < vector_total(&nodes_own_flag); i++) {
         tree_node *node = vector_get(&nodes_own_flag, i);
-        if (node != NULL) {
+        // if (node != NULL) {
             // node->marker = DEFAULT_MARKER;
             node->marker = DEFAULT_MARKER;
-        }
+        // }
     }
 
     // get the flag of the new wlc & wrc
