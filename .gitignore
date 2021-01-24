@@ -1,0 +1,6 @@
+## 2021_winter_PE ignore file ##
+*.cmd
+*.o
+*.ko
+*.order
+*.symvers
