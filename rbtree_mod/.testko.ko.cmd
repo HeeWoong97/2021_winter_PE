@@ -1,0 +1,1 @@
+cmd_/home/ungung97/2021_winter_PE/rbtree_mod/testko.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/ungung97/2021_winter_PE/rbtree_mod/testko.ko /home/ungung97/2021_winter_PE/rbtree_mod/testko.o /home/ungung97/2021_winter_PE/rbtree_mod/testko.mod.o;  true

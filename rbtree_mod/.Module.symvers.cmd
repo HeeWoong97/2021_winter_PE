@@ -1,0 +1,1 @@
+cmd_/home/ungung97/2021_winter_PE/rbtree_mod/Module.symvers := sed 's/ko$$/o/' /home/ungung97/2021_winter_PE/rbtree_mod/modules.order | scripts/mod/modpost  -a   -o /home/ungung97/2021_winter_PE/rbtree_mod/Module.symvers -e -i Module.symvers   -T -
