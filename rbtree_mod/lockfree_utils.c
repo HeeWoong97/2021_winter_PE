@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "vector_arr.h"
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -6,7 +7,6 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include "vector_arr.h"
 
 /******************
  * helper function

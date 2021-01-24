@@ -1,13 +1,13 @@
 #ifndef RED_BLACK_TREE_H
 #define RED_BLACK_TREE_H
 
+#include "vector_arr.h"
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include "vector_arr.h"
 
 extern __thread long thread_index;
 extern bool remove_dbg; // for only debug remove
@@ -94,13 +94,4 @@ void fix_up_case3(tree_node *x, tree_node *w);
 void fix_up_case1_r(tree_node *x, tree_node *w); // mirror case
 void fix_up_case3_r(tree_node *x, tree_node *w); // mirror case
 
-// inline void print_get(tree_node *x)
-// {
-//     dbg_printf("[FLAG] get flag of %lu\n", (unsigned long)x);
-// }
-
-// inline void print_release(tree_node *x)
-// {
-//     dbg_printf("[FLAG] release flag of %lu\n", (unsigned long)x);
-// }
 #endif

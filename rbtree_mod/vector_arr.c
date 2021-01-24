@@ -1,10 +1,11 @@
+#include "vector_arr.h"
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include "vector_arr.h"
 
 void vector_init(vector *v)
 {
