@@ -47,9 +47,11 @@ int main(int argc, char **argv)
 
     float com_time1 = 0, com_time2 = 0.000001, com_time3 = 0.00001, com_time4 = 0.0001, com_time5 = 0.001;
     vector_init(&COMPUTATION_TIME_LIST);
-    vector_add(&COMPUTATION_TIME_LIST, &com_time1); vector_add(&COMPUTATION_TIME_LIST, &com_time2); 
-    vector_add(&COMPUTATION_TIME_LIST, &com_time3); vector_add(&COMPUTATION_TIME_LIST, &com_time4); 
-    vector_add(&COMPUTATION_TIME_LIST, &com_time5);
+    vector_add(&COMPUTATION_TIME_LIST, &com_time1); 
+    // vector_add(&COMPUTATION_TIME_LIST, &com_time2); 
+    // vector_add(&COMPUTATION_TIME_LIST, &com_time3); 
+    // vector_add(&COMPUTATION_TIME_LIST, &com_time4); 
+    // vector_add(&COMPUTATION_TIME_LIST, &com_time5);
 
     vector_init(&test_time_list);
 
