@@ -8,6 +8,7 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>
+#include <linux/types.h>
 
 /******************
  * helper function

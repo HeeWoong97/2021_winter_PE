@@ -6,6 +6,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 void vector_init(vector *v)
 {

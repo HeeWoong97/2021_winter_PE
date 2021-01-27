@@ -8,6 +8,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 extern __thread long thread_index;
 extern bool remove_dbg; // for only debug remove

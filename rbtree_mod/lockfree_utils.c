@@ -7,6 +7,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 /******************
  * helper function

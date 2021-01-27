@@ -7,7 +7,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <linux/mutex.h>
+#include <linux/types.h>
 
 extern __thread long thread_index;
 
@@ -155,7 +155,7 @@ void tree_insert(tree_node *root, tree_node *new_node)
     dbg_printf("[FLAG] release flag of 0x%lx\n", (unsigned long)root);
     root->flag = false;
 
-    restart:;
+restart:
 
     z = NULL;
     curr_node = root->left_child;
@@ -368,7 +368,7 @@ void rb_remove(tree_node *root, int value)
     dbg_printf("[Remove] thread %ld value %d\n", thread_index, value);
     // init thread local nodes with flag
     clear_local_area();
-restart:;
+restart:
 
     z = par_find(root, value);
     if (z == NULL)
