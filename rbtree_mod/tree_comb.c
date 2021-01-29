@@ -1,6 +1,10 @@
 #include "tree_comb.h"
 
-__thread vector nodes_own_flag;
+/*Thread Local Variable*/
+long thread_index;
+vector nodes_own_flag;
+
+struct mutex show_tree_lock;
 
 /*******************************
 *         vector_arr.c
@@ -29,6 +33,16 @@ void *vector_get(vector *v, int index)
     return NULL;
 }
 
+void vector_clear(vector *v)
+{
+    int i;
+
+    for (i = 0; i < v->total; i++) {
+        v->items[i] = NULL;
+    }
+    v->total = 0;
+}
+
 void vector_delete(vector *v, int index)
 {
     int i;
@@ -45,15 +59,6 @@ void vector_delete(vector *v, int index)
     }
 
     v->total--;
-}
-
-void vector_clear(vector *v)
-{
-    int i;
-
-    for (i = 0; i < vector_total(v); i++) {
-        vector_delete(v, i);
-    }
 }
 
 /*******************************
@@ -405,180 +410,180 @@ void rb_insert(tree_node *root, int value)
     // vector_free(&local_area);
 }
 
-// /**
-//  * red-black tree remove
-//  */
-// void rb_remove(tree_node *root, int value)
-// {
-//     tree_node *z;
-//     tree_node *y; // actual delete node
-//     tree_node *replace_node;
+/**
+ * red-black tree remove
+ */
+void rb_remove(tree_node *root, int value)
+{
+    tree_node *z;
+    tree_node *y; // actual delete node
+    tree_node *replace_node;
 
-//     dbg_printf("[Remove] thread %ld value %d\n", thread_index, value);
-//     // init thread local nodes with flag
-//     clear_local_area();
-// restart:
+    dbg_printf("[Remove] thread %ld value %d\n", thread_index, value);
+    // init thread local nodes with flag
+    clear_local_area();
+restart:
 
-//     z = par_find(root, value);
-//     if (z == NULL)
-//         return;
+    z = par_find(root, value);
+    if (z == NULL)
+        return;
 
-//     if (z->left_child->is_leaf || z->right_child->is_leaf)
-//         y = z;
-//     else
-//         y = par_find_successor(z);
+    if (z->left_child->is_leaf || z->right_child->is_leaf)
+        y = z;
+    else
+        y = par_find_successor(z);
     
-//     if (y == NULL) {
-//         z->flag = false;
-//         goto restart;
-//     }
+    if (y == NULL) {
+        z->flag = false;
+        goto restart;
+    }
     
-//     // we now hold the flag of y(delete_node) AND of z(node)
+    // we now hold the flag of y(delete_node) AND of z(node)
 
-//     // set up for local area delete, also four markers above
-//     if (!setup_local_area_for_delete(y, z)) {
-//         // release flags
-//         y->flag = false;
-//         if (y != z) z->flag = false;
-//         goto restart; // deletion failed, try again
-//     }
-//     dbg_printf("[Remove] actual node with value %d\n", y->value);
+    // set up for local area delete, also four markers above
+    if (!setup_local_area_for_delete(y, z)) {
+        // release flags
+        y->flag = false;
+        if (y != z) z->flag = false;
+        goto restart; // deletion failed, try again
+    }
+    dbg_printf("[Remove] actual node with value %d\n", y->value);
     
-//     // unlink y from the tree
-//     replace_node = replace_parent(root, y);
+    // unlink y from the tree
+    replace_node = replace_parent(root, y);
 
-//     // replace the value
-//     if (y != z)
-//         z->value = y->value;
+    // replace the value
+    if (y != z)
+        z->value = y->value;
     
-//     // release z's flag safely
-//     if (!is_in_local_area(z)) {
-//         z->flag = false;
-//         dbg_printf("[Flag] release %d\n", z->value);
-//     }
+    // release z's flag safely
+    if (!is_in_local_area(z)) {
+        z->flag = false;
+        dbg_printf("[Flag] release %d\n", z->value);
+    }
 
-//     if (y->color == BLACK) /* fixup case */
-//         replace_node = rb_remove_fixup(root, replace_node, z);
+    if (y->color == BLACK) /* fixup case */
+        replace_node = rb_remove_fixup(root, replace_node, z);
     
-//     // clear markers above
-//     while (!release_markers_above(replace_node->parent, z))
-//         ;
+    // clear markers above
+    while (!release_markers_above(replace_node->parent, z))
+        ;
 
-//     clear_local_area();
+    clear_local_area();
     
-//     dbg_printf("[Remove] node with value %d complete.\n", value);
-//     free_node(y);
-// }
+    dbg_printf("[Remove] node with value %d complete.\n", value);
+    free_node(y);
+}
 
-// /**
-//  * red-black tree remove fixup
-//  * when delete node and replace node are both black
-//  * rule 5 is violated and should be fixed
-//  */
-// tree_node *rb_remove_fixup(tree_node *root, 
-//                            tree_node *node,
-//                            tree_node *z)
-// {
-//     while (!is_root(root, node) && node->color == BLACK) {
-//         tree_node *brother_node;
-//         if (is_left(node)) {
-//             brother_node = node->parent->right_child;
-//             if (brother_node->color == RED) { // case 1
-//                 brother_node->color = BLACK;
-//                 node->parent->color = RED;
-//                 left_rotate(root, node->parent);
-//                 brother_node = node->parent->right_child; // must be black
+/**
+ * red-black tree remove fixup
+ * when delete node and replace node are both black
+ * rule 5 is violated and should be fixed
+ */
+tree_node *rb_remove_fixup(tree_node *root, 
+                           tree_node *node,
+                           tree_node *z)
+{
+    while (!is_root(root, node) && node->color == BLACK) {
+        tree_node *brother_node;
+        if (is_left(node)) {
+            brother_node = node->parent->right_child;
+            if (brother_node->color == RED) { // case 1
+                brother_node->color = BLACK;
+                node->parent->color = RED;
+                left_rotate(root, node->parent);
+                brother_node = node->parent->right_child; // must be black
 
-//                 fix_up_case1(node, brother_node);
-//                 dbg_printf("[Remove] case1 done.\n");
-//             } // case 1 will definitely turn into case 2
+                fix_up_case1(node, brother_node);
+                dbg_printf("[Remove] case1 done.\n");
+            } // case 1 will definitely turn into case 2
 
-//             if (brother_node->left_child->color == BLACK &&
-//                 brother_node->right_child->color == BLACK) { // case 2
-//                 brother_node->color = RED;
-//                 node = move_deleter_up(node);
-//                 dbg_printf("[Remove] case2 done.\n");
-//             }
+            if (brother_node->left_child->color == BLACK &&
+                brother_node->right_child->color == BLACK) { // case 2
+                brother_node->color = RED;
+                node = move_deleter_up(node);
+                dbg_printf("[Remove] case2 done.\n");
+            }
 
-//             else if (brother_node->right_child->color == BLACK) { // case 3
-//                 brother_node->left_child->color = BLACK;
-//                 brother_node->color = RED;
-//                 right_rotate(root, brother_node);
-//                 brother_node = node->parent->right_child;
+            else if (brother_node->right_child->color == BLACK) { // case 3
+                brother_node->left_child->color = BLACK;
+                brother_node->color = RED;
+                right_rotate(root, brother_node);
+                brother_node = node->parent->right_child;
 
-//                 fix_up_case3(node, brother_node);
-//                 dbg_printf("[Remove] case3 done.\n");
-//             }
+                fix_up_case3(node, brother_node);
+                dbg_printf("[Remove] case3 done.\n");
+            }
 
-//             else { // case 4
-//                 brother_node->color = node->parent->color;
-//                 node->parent->color = BLACK;
-//                 brother_node->right_child->color = BLACK;
-//                 left_rotate(root, node->parent);
+            else { // case 4
+                brother_node->color = node->parent->color;
+                node->parent->color = BLACK;
+                brother_node->right_child->color = BLACK;
+                left_rotate(root, node->parent);
 
-//                 node = node->parent;
-//                 dbg_printf("[Remove] case4 done.\n");
-//                 break;
-//             }
-//         }
-//         else { // mirror case of the above
-//             brother_node = node->parent->left_child;
-//             if (brother_node->color == RED) {
-//                 brother_node->color = BLACK;
-//                 node->parent->color = RED;
-//                 right_rotate(root, node->parent);
-//                 brother_node = node->parent->left_child;
+                node = node->parent;
+                dbg_printf("[Remove] case4 done.\n");
+                break;
+            }
+        }
+        else { // mirror case of the above
+            brother_node = node->parent->left_child;
+            if (brother_node->color == RED) {
+                brother_node->color = BLACK;
+                node->parent->color = RED;
+                right_rotate(root, node->parent);
+                brother_node = node->parent->left_child;
 
-//                 fix_up_case1_r(node, brother_node);
-//                 dbg_printf("[Remove] case1 done.\n");
-//             }
+                fix_up_case1_r(node, brother_node);
+                dbg_printf("[Remove] case1 done.\n");
+            }
 
-//             if (brother_node->left_child->color == BLACK &&
-//                      brother_node->right_child->color == BLACK) {
-//                 brother_node->color = RED;
-//                 node = move_deleter_up(node);
-//                 dbg_printf("[Remove] case2 done.\n");
-//             }
+            if (brother_node->left_child->color == BLACK &&
+                     brother_node->right_child->color == BLACK) {
+                brother_node->color = RED;
+                node = move_deleter_up(node);
+                dbg_printf("[Remove] case2 done.\n");
+            }
 
-//             else if (brother_node->left_child->color == BLACK) { // case 3
-//                 brother_node->right_child->color = BLACK;
-//                 brother_node->color = RED;
-//                 left_rotate(root, brother_node);
-//                 brother_node = node->parent->left_child;
+            else if (brother_node->left_child->color == BLACK) { // case 3
+                brother_node->right_child->color = BLACK;
+                brother_node->color = RED;
+                left_rotate(root, brother_node);
+                brother_node = node->parent->left_child;
 
-//                 fix_up_case3_r(node, brother_node);
-//                 dbg_printf("[Remove] case3 done.\n");
-//             }
+                fix_up_case3_r(node, brother_node);
+                dbg_printf("[Remove] case3 done.\n");
+            }
 
-//             else { // case 4
-//                 brother_node->color = node->parent->color;
-//                 node->parent->color = BLACK;
-//                 brother_node->left_child->color = BLACK;
-//                 right_rotate(root, node->parent);
+            else { // case 4
+                brother_node->color = node->parent->color;
+                node->parent->color = BLACK;
+                brother_node->left_child->color = BLACK;
+                right_rotate(root, node->parent);
 
-//                 node = node->parent;
-//                 dbg_printf("[Remove] case4 done.\n");
-//                 break;
-//             }
-//         }
-//     }
+                node = node->parent;
+                dbg_printf("[Remove] case4 done.\n");
+                break;
+            }
+        }
+    }
 
-//     node->color = BLACK;
+    node->color = BLACK;
     
-//     dbg_printf("[Remove] fixup complete.\n");
-//     return node;
-// }
+    dbg_printf("[Remove] fixup complete.\n");
+    return node;
+}
 
-// /**
-//  * lock-free tree search
-//  */
-// tree_node *tree_search(tree_node *root, int value)
-// {
-//     tree_node *z = par_find(root, value);
+/**
+ * lock-free tree search
+ */
+tree_node *tree_search(tree_node *root, int value)
+{
+    tree_node *z = par_find(root, value);
 
-//     dbg_printf("[Warning] tree serach not found.\n");
-//     return z;
-// }
+    dbg_printf("[Warning] tree serach not found.\n");
+    return z;
+}
 
 /*******************************
 *           utils.c
@@ -602,159 +607,159 @@ tree_node *create_dummy_node(void)
     return node;
 }
 
-// /**
-//  * create a red node, for insertion use
-//  */
-// tree_node *create_node(int value)
-// {
-//     tree_node *new_node;
-//     new_node = (tree_node *)kmalloc(sizeof(tree_node), GFP_KERNEL);
-//     new_node->color = RED;
-//     new_node->value = value;
-//     new_node->left_child = create_leaf_node();
-//     new_node->right_child = create_leaf_node();
-//     new_node->left_child->parent = new_node;
-//     new_node->right_child->parent = new_node;
-//     new_node->is_leaf = false;
-//     new_node->parent = NULL;
-//     new_node->flag = false;
-//     new_node->marker = DEFAULT_MARKER;
-//     return new_node;
-// }
+/**
+ * create a red node, for insertion use
+ */
+tree_node *create_node(int value)
+{
+    tree_node *new_node;
+    new_node = (tree_node *)kmalloc(sizeof(tree_node), GFP_KERNEL);
+    new_node->color = RED;
+    new_node->value = value;
+    new_node->left_child = create_leaf_node();
+    new_node->right_child = create_leaf_node();
+    new_node->left_child->parent = new_node;
+    new_node->right_child->parent = new_node;
+    new_node->is_leaf = false;
+    new_node->parent = NULL;
+    new_node->flag = false;
+    new_node->marker = DEFAULT_MARKER;
+    return new_node;
+}
 
-// /**
-//  * show tree
-//  * only used for debug
-//  * because only small tree can be shown
-//  */
-// void show_tree(tree_node *root)
-// {
-//     tree_node *root_node;
-//     vector frontier;
+/**
+ * show tree
+ * only used for debug
+ * because only small tree can be shown
+ */
+void show_tree(tree_node *root)
+{
+    tree_node *root_node;
+    vector frontier;
 
-//     mutex_init(&show_tree_lock);
-//     mutex_lock(&show_tree_lock);
-//     dbg_printf("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-//     printk("[root] pointer: 0x%lx flag:%d\n", (unsigned long) root, (int) root->flag);
+    mutex_init(&show_tree_lock);
+    mutex_lock(&show_tree_lock);
+    dbg_printf("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+    printk("[root] pointer: 0x%lx flag:%d\n", (unsigned long) root, (int) root->flag);
 
-//     root_node = root->left_child;
-//     if (root_node->is_leaf) {
-//         printk("Empty Tree.\n");
-//         mutex_unlock(&show_tree_lock);
-//         return;
-//     }
+    root_node = root->left_child;
+    if (root_node->is_leaf) {
+        printk("Empty Tree.\n");
+        mutex_unlock(&show_tree_lock);
+        return;
+    }
     
-//     vector_init(&frontier);
-//     vector_clear(&frontier);
-//     vector_add(&frontier, root_node);
+    vector_init(&frontier);
+    vector_clear(&frontier);
+    vector_add(&frontier, root_node);
 
-//     while (vector_total(&frontier) > 0) {
-//         tree_node *cur_node = vector_get(&frontier, vector_total(&frontier) - 1);
-//         tree_node *left_child = cur_node->left_child;
-//         tree_node *right_child = cur_node->right_child;
+    while (vector_total(&frontier) > 0) {
+        tree_node *cur_node = vector_get(&frontier, vector_total(&frontier) - 1);
+        tree_node *left_child = cur_node->left_child;
+        tree_node *right_child = cur_node->right_child;
 
-//         printk("pointer: 0x%lx flag:%d marker: %d\n", (unsigned long) cur_node, (int) cur_node->flag, cur_node->marker);
+        printk("pointer: 0x%lx flag:%d marker: %d\n", (unsigned long) cur_node, (int) cur_node->flag, cur_node->marker);
 
-//         if (cur_node->color == BLACK)
-//             printk("(%d) Black\n", cur_node->value);
-//         else
-//             printk("(%d) Red\n", cur_node->value);
+        if (cur_node->color == BLACK)
+            printk("(%d) Black\n", cur_node->value);
+        else
+            printk("(%d) Red\n", cur_node->value);
 
-//         vector_delete(&frontier, vector_total(&frontier) - 1);
-//         if (left_child->is_leaf) {
-//             printk("    left null flag:%d pointer: 0x%lx\n", (int)left_child->flag, (unsigned long)left_child);
-//         }
-//         else {
-//             if (left_child->color == BLACK)
-//                 printk("    (%d) Black\n", left_child->value);
-//             else
-//                 printk("    (%d) Red\n", left_child->value);
-//             vector_add(&frontier, left_child);
-//         }
+        vector_delete(&frontier, vector_total(&frontier) - 1);
+        if (left_child->is_leaf) {
+            printk("    left null flag:%d pointer: 0x%lx\n", (int)left_child->flag, (unsigned long)left_child);
+        }
+        else {
+            if (left_child->color == BLACK)
+                printk("    (%d) Black\n", left_child->value);
+            else
+                printk("    (%d) Red\n", left_child->value);
+            vector_add(&frontier, left_child);
+        }
 
-//         if (right_child->is_leaf) {
-//             printk("    right null flag:%d pointer: 0x%lx\n", (int)right_child->flag, (unsigned long)right_child);
-//         }
-//         else {
-//             if (right_child->color == BLACK)
-//                 printk("    (%d) Black\n", right_child->value);
-//             else
-//                 printk("    (%d) Red\n", right_child->value);
-//             vector_add(&frontier, right_child);
-//         }
-//     }
-//     printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-//     mutex_unlock(&show_tree_lock);
-// }
+        if (right_child->is_leaf) {
+            printk("    right null flag:%d pointer: 0x%lx\n", (int)right_child->flag, (unsigned long)right_child);
+        }
+        else {
+            if (right_child->color == BLACK)
+                printk("    (%d) Black\n", right_child->value);
+            else
+                printk("    (%d) Red\n", right_child->value);
+            vector_add(&frontier, right_child);
+        }
+    }
+    printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+    mutex_unlock(&show_tree_lock);
+}
 
-// /**
-//  * show tree, will check flags and markers, for debug use
-//  * only used for debug
-//  * because only small tree can be shown
-//  */
-// void show_tree_strict(tree_node *root)
-// {
-//     tree_node *root_node;
-//     vector frontier;
+/**
+ * show tree, will check flags and markers, for debug use
+ * only used for debug
+ * because only small tree can be shown
+ */
+void show_tree_strict(tree_node *root)
+{
+    tree_node *root_node;
+    vector frontier;
 
-//     printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-//     printk("[root] pointer: 0x%lx flag:%d\n", (unsigned long)root, (int)root->flag);
+    printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+    printk("[root] pointer: 0x%lx flag:%d\n", (unsigned long)root, (int)root->flag);
 
-//     root_node = root->left_child;
-//     if (root_node->is_leaf) {
-//         printk("Empty Tree.\n");
-//         return;
-//     }
+    root_node = root->left_child;
+    if (root_node->is_leaf) {
+        printk("Empty Tree.\n");
+        return;
+    }
 
-//     vector_init(&frontier);
-//     vector_clear(&frontier);
-//     vector_add(&frontier, root_node);
+    vector_init(&frontier);
+    vector_clear(&frontier);
+    vector_add(&frontier, root_node);
 
-//     while (vector_total(&frontier) > 0) {
-//         tree_node *cur_node = vector_get(&frontier, vector_total(&frontier) - 1);
-//         tree_node *left_child = cur_node->left_child;
-//         tree_node *right_child = cur_node->right_child;
+    while (vector_total(&frontier) > 0) {
+        tree_node *cur_node = vector_get(&frontier, vector_total(&frontier) - 1);
+        tree_node *left_child = cur_node->left_child;
+        tree_node *right_child = cur_node->right_child;
 
-//         printk("pointer: 0x%lx flag:%d marker: %d\n", (unsigned long)cur_node, (int)cur_node->flag, cur_node->marker);
-//         if (cur_node->flag) 
-//             printk(">>>>>>> FLAG WARNING <<<<<<<\n");
-//         if (cur_node->marker != DEFAULT_MARKER) 
-//             printk(">>>>>>> MARKER WARNING <<<<<<<\n");
+        printk("pointer: 0x%lx flag:%d marker: %d\n", (unsigned long)cur_node, (int)cur_node->flag, cur_node->marker);
+        if (cur_node->flag) 
+            printk(">>>>>>> FLAG WARNING <<<<<<<\n");
+        if (cur_node->marker != DEFAULT_MARKER) 
+            printk(">>>>>>> MARKER WARNING <<<<<<<\n");
 
-//         if (cur_node->color == BLACK)
-//             printk("(%d) Black\n", cur_node->value);
-//         else
-//             printk("(%d) Red\n", cur_node->value);
+        if (cur_node->color == BLACK)
+            printk("(%d) Black\n", cur_node->value);
+        else
+            printk("(%d) Red\n", cur_node->value);
 
-//         vector_delete(&frontier, vector_total(&frontier) - 1);
-//         if (left_child->is_leaf) {
-//             printk("    left null flag:%d pointer: 0x%lx\n", (int)left_child->flag, (unsigned long)left_child);
-//             if (cur_node->flag)
-//                 printk(">>>>>>> FLAG WARNING <<<<<<<\n");
-//         }
-//         else {
-//             if (left_child->color == BLACK)
-//                 printk("    (%d) Black\n", left_child->value);
-//             else
-//                 printk("    (%d) Red\n", left_child->value);
-//             vector_add(&frontier, left_child);
-//         }
+        vector_delete(&frontier, vector_total(&frontier) - 1);
+        if (left_child->is_leaf) {
+            printk("    left null flag:%d pointer: 0x%lx\n", (int)left_child->flag, (unsigned long)left_child);
+            if (cur_node->flag)
+                printk(">>>>>>> FLAG WARNING <<<<<<<\n");
+        }
+        else {
+            if (left_child->color == BLACK)
+                printk("    (%d) Black\n", left_child->value);
+            else
+                printk("    (%d) Red\n", left_child->value);
+            vector_add(&frontier, left_child);
+        }
 
-//         if (right_child->is_leaf) {
-//             printk("    right null flag:%d pointer: 0x%lx\n", (int)right_child->flag, (unsigned long)right_child);
-//             if (cur_node->flag)
-//                 printk(">>>>>>> FLAG WARNING <<<<<<<\n");
-//         }
-//         else {
-//             if (right_child->color == BLACK)
-//                 printk("    (%d) Black\n", right_child->value);
-//             else
-//                 printk("    (%d) Red\n", right_child->value);
-//             vector_add(&frontier, right_child);
-//         }
-//     }
-//     printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-// }
+        if (right_child->is_leaf) {
+            printk("    right null flag:%d pointer: 0x%lx\n", (int)right_child->flag, (unsigned long)right_child);
+            if (cur_node->flag)
+                printk(">>>>>>> FLAG WARNING <<<<<<<\n");
+        }
+        else {
+            if (right_child->color == BLACK)
+                printk("    (%d) Black\n", right_child->value);
+            else
+                printk("    (%d) Red\n", right_child->value);
+            vector_add(&frontier, right_child);
+        }
+    }
+    printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+}
 
 /**
  * true if node is the root node, aka has a null parent
@@ -786,42 +791,42 @@ tree_node* create_leaf_node(void)
     return new_node;
 }
 
-// /**
-//  * replace the node with its child
-//  * this node has at most one non-nil child
-//  * return this child after modifying the relation ship
-//  */
-// tree_node *replace_parent(tree_node *root, tree_node *node)
-// {
-//     tree_node *child;
-//     if (node->left_child->is_leaf) {
-//         child = node->right_child;
-//         free_node(node->left_child);
-//     }
-//     else {
-//         child = node->left_child;
-//         free_node(node->right_child);
-//     }
+/**
+ * replace the node with its child
+ * this node has at most one non-nil child
+ * return this child after modifying the relation ship
+ */
+tree_node *replace_parent(tree_node *root, tree_node *node)
+{
+    tree_node *child;
+    if (node->left_child->is_leaf) {
+        child = node->right_child;
+        free_node(node->left_child);
+    }
+    else {
+        child = node->left_child;
+        free_node(node->right_child);
+    }
     
-//     if (is_root(root, node)) {
-//         child->parent = root;
-//         root->left_child = child;
-//         node->parent = NULL;
-//     }
+    if (is_root(root, node)) {
+        child->parent = root;
+        root->left_child = child;
+        node->parent = NULL;
+    }
     
-//     else if (is_left(node)) {
-//         child->parent = node->parent;
-//         node->parent->left_child = child;
-//     }
+    else if (is_left(node)) {
+        child->parent = node->parent;
+        node->parent->left_child = child;
+    }
 
-//     else {
-//         child->parent = node->parent;
-//         node->parent->right_child = child;
-//     }
+    else {
+        child->parent = node->parent;
+        node->parent->right_child = child;
+    }
 
-//     dbg_printf("[Remove] unlink complete.\n");
-//     return child;
-// }
+    dbg_printf("[Remove] unlink complete.\n");
+    return child;
+}
 
 /**
  * true if node is the left child of its parent node
@@ -880,56 +885,54 @@ void free_node(tree_node *node)
     kfree(node);
 }
 
-// /*******************************
-// *       lockfree_utils.c
-// *******************************/
+/*******************************
+*       lockfree_utils.c
+*******************************/
 
-// /**
-//  * cannot find a 'extern' way to use thread_local variables
-//  * across files
-//  */
-// void thread_index_init(long i)
-// {
-//     thread_index = i;
-// }
+/**
+ * cannot find a 'extern' way to use thread_local variables
+ * across files
+ */
+void thread_index_init(long i)
+{
+    thread_index = i;
+}
 
-// /**
-//  * clear local area
-//  */
-// void clear_local_area(void)
-// {   
-//     int i;
+/**
+ * clear local area
+ */
+void clear_local_area(void)
+{   
+    int i;
+    tree_node *node;
 
-//     if (vector_total(&nodes_own_flag) == 0) return;
-//     dbg_printf("[Flag] Clear\n");
-//     for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-//         tree_node *node = vector_get(&nodes_own_flag, i);
-//         // if (node != NULL) {
-//             node->flag = false;
-//             dbg_printf("[Flag]      %d, 0x%lx, %d\n",
-//                     node->value, (unsigned long)node, (int)node->flag);
-//         // }
-//     }
-//     vector_clear(&nodes_own_flag);
-//     // vector_free(&nodes_own_flag);
-// }
+    if (vector_total(&nodes_own_flag) == 0) return;
+    dbg_printf("[Flag] Clear\n");
+    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
+        node = vector_get(&nodes_own_flag, i);
+        // node->flag = false; // ??
+        dbg_printf("[Flag]      %d, 0x%lx, %d\n",
+                node->value, (unsigned long)node, (int)node->flag);
+    }
+    vector_clear(&nodes_own_flag);
+}
 
-// /**
-//  * true if the node is in our local area
-//  */
-// bool is_in_local_area(tree_node *target_node)
-// {
-//     int i;
+/**
+ * true if the node is in our local area
+ */
+bool is_in_local_area(tree_node *target_node)
+{
+    int i;
 
-//     for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-//         tree_node *node = vector_get(&nodes_own_flag, i);
-//         // if (node != NULL) {
-//             if (node == target_node) return true;        
-//         // }
-//     }
+    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
+        tree_node *node = vector_get(&nodes_own_flag, i);
+        // if (node != NULL) {
+            if (node == target_node) return true;        
+        // }
+    }
     
-//     return false;
-// }
+    return false;
+}
 
 /**
  * return true if the node has no other's marker
@@ -947,660 +950,660 @@ bool has_no_others_marker(tree_node *t, tree_node *z,
     return true;
 }
 
-// /**
-//  * try to get four markers above by getting flags first
-//  * 
-//  * @params:
-//  *      start - parent node of the actual node to be deleted
-//  */
-// bool get_markers_above(tree_node *start, tree_node *z, bool release)
-// {
-//     bool expect;
+/**
+ * try to get four markers above by getting flags first
+ * 
+ * @params:
+ *      start - parent node of the actual node to be deleted
+ */
+bool get_markers_above(tree_node *start, tree_node *z, bool release)
+{
+    bool expect;
 
-//     // Now get marker(s) above
-//     tree_node *pos1, *pos2, *pos3, *pos4;
+    // Now get marker(s) above
+    tree_node *pos1, *pos2, *pos3, *pos4;
 
-//     pos1 = start->parent;
-//     if (pos1 != z) {
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&pos1->flag, expect, true))
-//             return false;
-//     }
+    pos1 = start->parent;
+    if (pos1 != z) {
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&pos1->flag, expect, true))
+            return false;
+    }
     
-//     if ((pos1 != start->parent) 
-//         || (!has_no_others_marker(pos1, z, thread_index))) {
-//         if (pos1 != z) 
-//             pos1->flag = false;
-//         return false;
-//     }
+    if ((pos1 != start->parent) 
+        || (!has_no_others_marker(pos1, z, thread_index))) {
+        if (pos1 != z) 
+            pos1->flag = false;
+        return false;
+    }
 
-//     pos2 = pos1->parent;
-//     if (pos2 != z) {
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&pos2->flag, expect, true)) {
-//             if (pos1 != z)
-//                 pos1->flag = false;
-//             return false;
-//         }
-//     }
+    pos2 = pos1->parent;
+    if (pos2 != z) {
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&pos2->flag, expect, true)) {
+            if (pos1 != z)
+                pos1->flag = false;
+            return false;
+        }
+    }
 
-//     if ((pos2 != pos1->parent) 
-//         || (!has_no_others_marker(pos2, z, thread_index))) {
-//         if (pos1 != z)
-//             pos1->flag = false;
-//         if (pos2 != z)
-//             pos2->flag = false;
-//         return false;
-//     }
+    if ((pos2 != pos1->parent) 
+        || (!has_no_others_marker(pos2, z, thread_index))) {
+        if (pos1 != z)
+            pos1->flag = false;
+        if (pos2 != z)
+            pos2->flag = false;
+        return false;
+    }
 
-//     pos3 = pos2->parent;
-//     if (pos3 != z) {
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&pos3->flag, expect, true)) {
-//             if (pos1 != z)
-//                 pos1->flag = false;
-//             if (pos2 != z)
-//                 pos2->flag = false;
-//             return false;
-//         }
-//     }
+    pos3 = pos2->parent;
+    if (pos3 != z) {
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&pos3->flag, expect, true)) {
+            if (pos1 != z)
+                pos1->flag = false;
+            if (pos2 != z)
+                pos2->flag = false;
+            return false;
+        }
+    }
 
-//     if ((pos3 != pos2->parent) 
-//         || (!has_no_others_marker(pos3, z, thread_index))) {
-//         if (pos1 != z)
-//             pos1->flag = false;
-//         if (pos2 != z)
-//             pos2->flag = false;
-//         if (pos3 != z)
-//             pos3->flag = false;
-//         return false;
-//     }
+    if ((pos3 != pos2->parent) 
+        || (!has_no_others_marker(pos3, z, thread_index))) {
+        if (pos1 != z)
+            pos1->flag = false;
+        if (pos2 != z)
+            pos2->flag = false;
+        if (pos3 != z)
+            pos3->flag = false;
+        return false;
+    }
 
-//     pos4 = pos3->parent;
-//     if (pos4 != z) {
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&pos4->flag, expect, true)) {
-//             if (pos1 != z)
-//                 pos1->flag = false;
-//             if (pos2 != z)
-//                 pos2->flag = false;
-//             if (pos3 != z)
-//                 pos3->flag = false;
-//             return false;
-//         }
-//     }
+    pos4 = pos3->parent;
+    if (pos4 != z) {
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&pos4->flag, expect, true)) {
+            if (pos1 != z)
+                pos1->flag = false;
+            if (pos2 != z)
+                pos2->flag = false;
+            if (pos3 != z)
+                pos3->flag = false;
+            return false;
+        }
+    }
     
-//     if ((pos4 != pos3->parent) 
-//         || (!has_no_others_marker(pos4, z, thread_index))) {
-//         if (pos1 != z)
-//             pos1->flag = false;
-//         if (pos2 != z)
-//             pos2->flag = false;
-//         if (pos3 != z)
-//             pos3->flag = false;
-//         if (pos4 != z)
-//             pos4->flag = false;
-//         return false;
-//     }
+    if ((pos4 != pos3->parent) 
+        || (!has_no_others_marker(pos4, z, thread_index))) {
+        if (pos1 != z)
+            pos1->flag = false;
+        if (pos2 != z)
+            pos2->flag = false;
+        if (pos3 != z)
+            pos3->flag = false;
+        if (pos4 != z)
+            pos4->flag = false;
+        return false;
+    }
 
-//     // successfully get the four markers
-//     pos1->marker = thread_index;
-//     pos2->marker = thread_index;
-//     pos3->marker = thread_index;
-//     pos4->marker = thread_index;
+    // successfully get the four markers
+    pos1->marker = thread_index;
+    pos2->marker = thread_index;
+    pos3->marker = thread_index;
+    pos4->marker = thread_index;
 
-//     if (release) {
-//         if (pos1 != z)
-//             pos1->flag = false;
-//         if (pos2 != z)
-//             pos2->flag = false;
-//         if (pos3 != z)
-//             pos3->flag = false;
-//         if (pos4 != z)
-//             pos4->flag = false;
-//     }
+    if (release) {
+        if (pos1 != z)
+            pos1->flag = false;
+        if (pos2 != z)
+            pos2->flag = false;
+        if (pos3 != z)
+            pos3->flag = false;
+        if (pos4 != z)
+            pos4->flag = false;
+    }
 
-//     dbg_printf("[Flag] get for marker: %d %d %d %d\n",
-//                pos1->value, pos2->value, pos3->value, pos4->value);
+    dbg_printf("[Flag] get for marker: %d %d %d %d\n",
+               pos1->value, pos2->value, pos3->value, pos4->value);
 
-//     return true;
-// }
+    return true;
+}
 
-// /**
-//  * @params
-//  *  z: target node (replace value)
-//  *  y: actually delete node
-//  */
-// bool setup_local_area_for_delete(tree_node *y, tree_node *z)
-// {
-//     bool expect;
-//     tree_node *x;
-//     tree_node *yp;
-//     tree_node *w;
-//     tree_node *wlc, *wrc;
+/**
+ * @params
+ *  z: target node (replace value)
+ *  y: actually delete node
+ */
+bool setup_local_area_for_delete(tree_node *y, tree_node *z)
+{
+    bool expect;
+    tree_node *x;
+    tree_node *yp;
+    tree_node *w;
+    tree_node *wlc, *wrc;
 
-//     // the replace child, the actual target node
-//     x = y->left_child;
-//     if (y->left_child->is_leaf)
-//         x = y->right_child;
+    // the replace child, the actual target node
+    x = y->left_child;
+    if (y->left_child->is_leaf)
+        x = y->right_child;
     
-//     expect = false;
-//     // Try to get flags for the rest of the local area
-//     if (!__sync_bool_compare_and_swap(&x->flag, expect, true)) return false;
+    expect = false;
+    // Try to get flags for the rest of the local area
+    if (!__sync_bool_compare_and_swap(&x->flag, expect, true)) return false;
     
-//     yp = y->parent; // keep a copy of our parent pointer
-//     expect = false;
-//     if ((yp != z) && (!__sync_bool_compare_and_swap(&yp->flag, expect, true))) {
-//         x->flag = false;
-//         return false;
-//     }
-//     if (yp != y->parent) { // verify that parent is unchanged  
-//         x->flag = false; 
-//         if (yp!=z) yp->flag = false;
-//         return false;
-//     }
-//     w = y->parent->left_child;
-//     if (is_left(y))
-//         w = y->parent->right_child;
+    yp = y->parent; // keep a copy of our parent pointer
+    expect = false;
+    if ((yp != z) && (!__sync_bool_compare_and_swap(&yp->flag, expect, true))) {
+        x->flag = false;
+        return false;
+    }
+    if (yp != y->parent) { // verify that parent is unchanged  
+        x->flag = false; 
+        if (yp!=z) yp->flag = false;
+        return false;
+    }
+    w = y->parent->left_child;
+    if (is_left(y))
+        w = y->parent->right_child;
     
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&w->flag, expect, true)) {
-//         x->flag = false;
-//         if (yp != z)
-//             yp->flag = false;
-//         return false;
-//     }
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&w->flag, expect, true)) {
+        x->flag = false;
+        if (yp != z)
+            yp->flag = false;
+        return false;
+    }
 
-//     if (!w->is_leaf) {
-//         wlc = w->left_child;
-//         wrc = w->right_child;
+    if (!w->is_leaf) {
+        wlc = w->left_child;
+        wrc = w->right_child;
 
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&wlc->flag, expect, true)) {
-//             x->flag = false;
-//             w->flag = false;
-//             if (yp != z)
-//                 yp->flag = false;
-//             return false;
-//         }
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&wrc->flag, expect, true)) {
-//             x->flag = false;
-//             w->flag = false;
-//             wlc->flag = false;
-//             if (yp != z)
-//                 yp->flag = false;
-//             return false;
-//         }
-//     }
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&wlc->flag, expect, true)) {
+            x->flag = false;
+            w->flag = false;
+            if (yp != z)
+                yp->flag = false;
+            return false;
+        }
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&wrc->flag, expect, true)) {
+            x->flag = false;
+            w->flag = false;
+            wlc->flag = false;
+            if (yp != z)
+                yp->flag = false;
+            return false;
+        }
+    }
 
-//     // get four markers above to keep distance with other threads
-//     if (!get_markers_above(yp, z, true)) {
-//         x->flag = false;
-//         w->flag = false;
-//         if (!w->is_leaf) {
-//             wlc->flag = false;
-//             wrc->flag = false;
-//         }
-//         if (yp != z)
-//             yp->flag = false;
-//         return false;
-//     }
+    // get four markers above to keep distance with other threads
+    if (!get_markers_above(yp, z, true)) {
+        x->flag = false;
+        w->flag = false;
+        if (!w->is_leaf) {
+            wlc->flag = false;
+            wrc->flag = false;
+        }
+        if (yp != z)
+            yp->flag = false;
+        return false;
+    }
 
-//     // local area setup
-//     vector_init(&nodes_own_flag);
-//     vector_add(&nodes_own_flag, x);
-//     vector_add(&nodes_own_flag, w);
-//     vector_add(&nodes_own_flag, yp);
-//     if (!w->is_leaf) {
-//         vector_add(&nodes_own_flag, wlc);
-//         vector_add(&nodes_own_flag, wrc);
-//         dbg_printf("[Flag] local area: %d %d %d %d %d\n",
-//                    x->value, w->value, yp->value, wlc->value, wrc->value);
-//     }
-//     else {
-//         dbg_printf("[Flag] local area: %d %d %d\n",
-//                    x->value, w->value, yp->value);
-//     }
+    // local area setup
+    vector_init(&nodes_own_flag);
+    vector_add(&nodes_own_flag, x);
+    vector_add(&nodes_own_flag, w);
+    vector_add(&nodes_own_flag, yp);
+    if (!w->is_leaf) {
+        vector_add(&nodes_own_flag, wlc);
+        vector_add(&nodes_own_flag, wrc);
+        dbg_printf("[Flag] local area: %d %d %d %d %d\n",
+                   x->value, w->value, yp->value, wlc->value, wrc->value);
+    }
+    else {
+        dbg_printf("[Flag] local area: %d %d %d\n",
+                   x->value, w->value, yp->value);
+    }
 
-//     return true;
-// }
+    return true;
+}
 
-// /**
-//  * add intention markers (four is sufficient) as needed
-//  * and additional one (remove moveUp) or two (insert moveUp) markers
-//  */
-// bool get_flags_and_markers_above(tree_node *start, int numAdditional)
-// {
-//     /**
-//      * Check for a moveUpStruct provided by another process (due to 
-//      * Move-Up rule processing) and set ’PIDtoIgnore’ to the PID 
-//      * provided in that structure. Use the ’IsIn’ function to determine 
-//      * if a node is in the moveUpStruct. 
-//      * Start by getting flags on the four nodes we have markers on.
-//      */
-//     bool expect;
-//     tree_node *pos1;
-//     tree_node *pos2;
-//     tree_node *pos3;
-//     tree_node *pos4;
-//     tree_node *firstnew;
-//     tree_node *secondnew;
+/**
+ * add intention markers (four is sufficient) as needed
+ * and additional one (remove moveUp) or two (insert moveUp) markers
+ */
+bool get_flags_and_markers_above(tree_node *start, int numAdditional)
+{
+    /**
+     * Check for a moveUpStruct provided by another process (due to 
+     * Move-Up rule processing) and set ’PIDtoIgnore’ to the PID 
+     * provided in that structure. Use the ’IsIn’ function to determine 
+     * if a node is in the moveUpStruct. 
+     * Start by getting flags on the four nodes we have markers on.
+     */
+    bool expect;
+    tree_node *pos1;
+    tree_node *pos2;
+    tree_node *pos3;
+    tree_node *pos4;
+    tree_node *firstnew;
+    tree_node *secondnew;
 
-//     // get markers first and do not release flag
-//     if (!get_markers_above(start, NULL, false))
-//         return false;
+    // get markers first and do not release flag
+    if (!get_markers_above(start, NULL, false))
+        return false;
 
-//     pos1 = start->parent;
-//     pos2 = pos1->parent;
-//     pos3 = pos2->parent;
-//     pos4 = pos3->parent;
-//     // no need of this function
-//     // if (!get_flags_for_markers(start, moveUpStruct, &pos1, &pos2, &pos3, &pos4))
-//     //     return false;
+    pos1 = start->parent;
+    pos2 = pos1->parent;
+    pos3 = pos2->parent;
+    pos4 = pos3->parent;
+    // no need of this function
+    // if (!get_flags_for_markers(start, moveUpStruct, &pos1, &pos2, &pos3, &pos4))
+    //     return false;
 
-//     // Now get additional marker(s) above
-//     firstnew = pos4->parent;
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&firstnew->flag, expect, true)) {
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         pos3->flag = false;
-//         pos4->flag = false;
-//         return false;
-//     }
+    // Now get additional marker(s) above
+    firstnew = pos4->parent;
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&firstnew->flag, expect, true)) {
+        pos1->flag = false;
+        pos2->flag = false;
+        pos3->flag = false;
+        pos4->flag = false;
+        return false;
+    }
 
-//     if ((firstnew != pos4->parent) 
-//         || (!has_no_others_marker(firstnew, start, thread_index))) {
-//         firstnew->flag = false;
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         pos3->flag = false;
-//         pos4->flag = false;
-//         return false;
-//     }
+    if ((firstnew != pos4->parent) 
+        || (!has_no_others_marker(firstnew, start, thread_index))) {
+        firstnew->flag = false;
+        pos1->flag = false;
+        pos2->flag = false;
+        pos3->flag = false;
+        pos4->flag = false;
+        return false;
+    }
 
-//     dbg_printf("[Flag] firstnew: %d\n",
-//                firstnew->value);
+    dbg_printf("[Flag] firstnew: %d\n",
+               firstnew->value);
 
-//     secondnew = NULL;
-//     if (numAdditional == 2) { // insertion so need another marker
-//         secondnew = firstnew->parent;
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&secondnew->flag, expect, true)) {
-//             firstnew->flag = false;
-//             pos1->flag = false;
-//             pos2->flag = false;
-//             pos3->flag = false;
-//             pos4->flag = false;
-//             return false;
-//         }
+    secondnew = NULL;
+    if (numAdditional == 2) { // insertion so need another marker
+        secondnew = firstnew->parent;
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&secondnew->flag, expect, true)) {
+            firstnew->flag = false;
+            pos1->flag = false;
+            pos2->flag = false;
+            pos3->flag = false;
+            pos4->flag = false;
+            return false;
+        }
 
-//         if ((secondnew != firstnew->parent) 
-//             || (!has_no_others_marker(secondnew, start, thread_index))) {
-//             secondnew->flag = false;
-//             firstnew->flag = false;
-//             pos1->flag = false;
-//             pos2->flag = false;
-//             pos3->flag = false;
-//             pos4->flag = false;
-//             return false;
-//         }
-//         dbg_printf("[Flag] second new: %d\n",
-//                    secondnew->value);
-//     }
+        if ((secondnew != firstnew->parent) 
+            || (!has_no_others_marker(secondnew, start, thread_index))) {
+            secondnew->flag = false;
+            firstnew->flag = false;
+            pos1->flag = false;
+            pos2->flag = false;
+            pos3->flag = false;
+            pos4->flag = false;
+            return false;
+        }
+        dbg_printf("[Flag] second new: %d\n",
+                   secondnew->value);
+    }
 
-//     firstnew->marker = thread_index;
-//     if (numAdditional == 2)
-//         secondnew->marker = thread_index;
+    firstnew->marker = thread_index;
+    if (numAdditional == 2)
+        secondnew->marker = thread_index;
 
-//     // release the four topmost flags acquired to extend markers.
-//     // This leaves flags on nodes now in the new local area.
-//     if (numAdditional == 2)
-//         secondnew->flag = false;
+    // release the four topmost flags acquired to extend markers.
+    // This leaves flags on nodes now in the new local area.
+    if (numAdditional == 2)
+        secondnew->flag = false;
 
-//     firstnew->flag = false;
-//     pos4->flag = false;
-//     pos3->flag = false;
+    firstnew->flag = false;
+    pos4->flag = false;
+    pos3->flag = false;
 
-//     if (numAdditional == 1)
-//         pos2->flag = false;
-//     return true;
-// }
+    if (numAdditional == 1)
+        pos2->flag = false;
+    return true;
+}
 
-// /**
-//  * try to release four markers above
-//  * this is the anti-function of get_markers_above()
-//  * this should always be valid if the rotation fixups are doing well
-//  * 
-//  * @params:
-//  *      start - parent node of the actual node to be deleted
-//  *      z - the node returned by par_find()
-//  */
-// bool release_markers_above(tree_node *start, tree_node *z)
-// {
-//     bool expect;
+/**
+ * try to release four markers above
+ * this is the anti-function of get_markers_above()
+ * this should always be valid if the rotation fixups are doing well
+ * 
+ * @params:
+ *      start - parent node of the actual node to be deleted
+ *      z - the node returned by par_find()
+ */
+bool release_markers_above(tree_node *start, tree_node *z)
+{
+    bool expect;
     
-//     // release 4 marker(s) above start node
-//     tree_node *pos1, *pos2, *pos3, *pos4;
+    // release 4 marker(s) above start node
+    tree_node *pos1, *pos2, *pos3, *pos4;
 
-//     pos1 = start->parent;
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&pos1->flag, expect, true))
-//         return false;
-//     if (pos1 != start->parent) { // verify that parent is unchanged
-//         pos1->flag = false;
-//         return false;
-//     }
-//     pos2 = pos1->parent;
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&pos2->flag, expect, true)) {
-//         pos1->flag = false;
-//         return false;
-//     }
-//     if (pos2 != pos1->parent) { // verify that parent is unchanged 
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         return false;
-//     }
-//     pos3 = pos2->parent;
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&pos3->flag, expect, true)) {
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         return false;
-//     }
-//     if (pos3 != pos2->parent) { // verify that parent is unchanged
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         pos3->flag = false;
-//         return false;
-//     }
-//     pos4 = pos3->parent;
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&pos4->flag, expect, true)) {
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         pos3->flag = false;
-//         return false;
-//     }
-//     if (pos4 != pos3->parent) { // verify that parent is unchanged
-//         pos1->flag = false;
-//         pos2->flag = false;
-//         pos3->flag = false;
-//         pos4->flag = false;
-//         return false;
-//     }
+    pos1 = start->parent;
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&pos1->flag, expect, true))
+        return false;
+    if (pos1 != start->parent) { // verify that parent is unchanged
+        pos1->flag = false;
+        return false;
+    }
+    pos2 = pos1->parent;
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&pos2->flag, expect, true)) {
+        pos1->flag = false;
+        return false;
+    }
+    if (pos2 != pos1->parent) { // verify that parent is unchanged 
+        pos1->flag = false;
+        pos2->flag = false;
+        return false;
+    }
+    pos3 = pos2->parent;
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&pos3->flag, expect, true)) {
+        pos1->flag = false;
+        pos2->flag = false;
+        return false;
+    }
+    if (pos3 != pos2->parent) { // verify that parent is unchanged
+        pos1->flag = false;
+        pos2->flag = false;
+        pos3->flag = false;
+        return false;
+    }
+    pos4 = pos3->parent;
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&pos4->flag, expect, true)) {
+        pos1->flag = false;
+        pos2->flag = false;
+        pos3->flag = false;
+        return false;
+    }
+    if (pos4 != pos3->parent) { // verify that parent is unchanged
+        pos1->flag = false;
+        pos2->flag = false;
+        pos3->flag = false;
+        pos4->flag = false;
+        return false;
+    }
 
-//     // release these markers
-//     if (pos1->marker == thread_index) pos1->marker = DEFAULT_MARKER;
-//     if (pos2->marker == thread_index) pos2->marker = DEFAULT_MARKER;
-//     if (pos3->marker == thread_index) pos3->marker = DEFAULT_MARKER;
-//     if (pos4->marker == thread_index) pos4->marker = DEFAULT_MARKER;
+    // release these markers
+    if (pos1->marker == thread_index) pos1->marker = DEFAULT_MARKER;
+    if (pos2->marker == thread_index) pos2->marker = DEFAULT_MARKER;
+    if (pos3->marker == thread_index) pos3->marker = DEFAULT_MARKER;
+    if (pos4->marker == thread_index) pos4->marker = DEFAULT_MARKER;
 
-//     dbg_printf("[Marker] release markers %d %d %d %d\n",
-//                 pos1->value, pos2->value, pos3->value, pos4->value);
+    dbg_printf("[Marker] release markers %d %d %d %d\n",
+                pos1->value, pos2->value, pos3->value, pos4->value);
     
-//     // release flags
-//     pos1->flag = false;
-//     pos2->flag = false;
-//     pos3->flag = false;
-//     pos4->flag = false;
+    // release flags
+    pos1->flag = false;
+    pos2->flag = false;
+    pos3->flag = false;
+    pos4->flag = false;
 
-//     return true;
-// }
+    return true;
+}
 
-// /**
-//  * move a deleter up the tree
-//  * case 2 in deletion
-//  */
-// tree_node *move_deleter_up(tree_node *oldx)
-// {
-//     bool expect;
-//     tree_node *oldp;
-//     tree_node *oldw;
-//     tree_node *oldwlc;
-//     tree_node *oldwrc;
-//     tree_node *newx;
-//     tree_node *newp;
-//     tree_node *neww, *newwlc, *newwrc;
+/**
+ * move a deleter up the tree
+ * case 2 in deletion
+ */
+tree_node *move_deleter_up(tree_node *oldx)
+{
+    bool expect;
+    tree_node *oldp;
+    tree_node *oldw;
+    tree_node *oldwlc;
+    tree_node *oldwrc;
+    tree_node *newx;
+    tree_node *newp;
+    tree_node *neww, *newwlc, *newwrc;
 
-//     // get direct pointers
-//     oldp = oldx->parent;
-//     oldw = oldp->left_child;
+    // get direct pointers
+    oldp = oldx->parent;
+    oldw = oldp->left_child;
 
-//     if (is_left(oldx))
-//         oldw = oldp->right_child;
+    if (is_left(oldx))
+        oldw = oldp->right_child;
 
-//     oldwlc = oldw->left_child;
-//     oldwrc = oldw->right_child;
+    oldwlc = oldw->left_child;
+    oldwrc = oldw->right_child;
 
-//     // extend intention markers (getting flags to set them)
-//     // from oldgp to top and one more. Also convert marker on oldgp to a flag
-//     while (!get_flags_and_markers_above(oldp, 1))
-//         ;
+    // extend intention markers (getting flags to set them)
+    // from oldgp to top and one more. Also convert marker on oldgp to a flag
+    while (!get_flags_and_markers_above(oldp, 1))
+        ;
     
-//     // get flags on the rest of new local area (w, wlc, wrc)
-//     newx = oldp;
-//     newp = newx->parent;
+    // get flags on the rest of new local area (w, wlc, wrc)
+    newx = oldp;
+    newp = newx->parent;
 
-// restart:
-//     neww = newp->left_child;
-//     if (is_left(newx))
-//         neww = newp->right_child;
+restart:
+    neww = newp->left_child;
+    if (is_left(newx))
+        neww = newp->right_child;
     
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&neww->flag, expect, true)) {
-//         goto restart;
-//     }
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&neww->flag, expect, true)) {
+        goto restart;
+    }
     
-//     newwlc = neww->left_child;
-//     newwrc = neww->right_child;
+    newwlc = neww->left_child;
+    newwrc = neww->right_child;
 
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&newwlc->flag, expect, true)) {
-//         neww->flag = false;
-//         goto restart;
-//     }
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&newwlc->flag, expect, true)) {
+        neww->flag = false;
+        goto restart;
+    }
 
-//     expect = false;
-//     if (!__sync_bool_compare_and_swap(&newwrc->flag, expect, true)) {
-//         newwlc->flag = false;
-//         neww->flag = false;
-//         goto restart;
-//     }
+    expect = false;
+    if (!__sync_bool_compare_and_swap(&newwrc->flag, expect, true)) {
+        newwlc->flag = false;
+        neww->flag = false;
+        goto restart;
+    }
 
-//     // release flags on old local area
-//     oldx->flag = false;
-//     oldw->flag = false;
-//     oldwlc->flag = false;
-//     oldwrc->flag = false;
+    // release flags on old local area
+    oldx->flag = false;
+    oldw->flag = false;
+    oldwlc->flag = false;
+    oldwrc->flag = false;
 
-//     dbg_printf("[Flag] release old local area: %d %d %d %d\n",
-//                 oldx->value, oldw->value, oldwlc->value, oldwrc->value);
+    dbg_printf("[Flag] release old local area: %d %d %d %d\n",
+                oldx->value, oldw->value, oldwlc->value, oldwrc->value);
 
-//     // clear marker
-//     newx->parent->marker = DEFAULT_MARKER;
+    // clear marker
+    newx->parent->marker = DEFAULT_MARKER;
 
-//     // new local area
-//     vector_clear(&nodes_own_flag);
-//     vector_add(&nodes_own_flag, newx);
-//     vector_add(&nodes_own_flag, neww);
-//     vector_add(&nodes_own_flag, newp);
-//     vector_add(&nodes_own_flag, newwlc);
-//     vector_add(&nodes_own_flag, newwrc);
-//     dbg_printf("[Flag] get new local area: %d %d %d %d %d\n",
-//                newx->value, neww->value, newp->value, 
-//                newwlc->value, newwrc->value);
-//     return newx;
-// }
+    // new local area
+    vector_clear(&nodes_own_flag);
+    vector_add(&nodes_own_flag, newx);
+    vector_add(&nodes_own_flag, neww);
+    vector_add(&nodes_own_flag, newp);
+    vector_add(&nodes_own_flag, newwlc);
+    vector_add(&nodes_own_flag, newwrc);
+    dbg_printf("[Flag] get new local area: %d %d %d %d %d\n",
+               newx->value, neww->value, newp->value, 
+               newwlc->value, newwrc->value);
+    return newx;
+}
 
 
-// /**
-//  * fix the side effect of delete case 1
-//  * 1. adjust the local area of the process that has done the rotation
-//  * 2. move any relocated markers from other processes to where 
-//  *    they belong after the rotation 
-//  *    --> clear all the 'naughty' markers within old local area
-//  */
-// void fix_up_case1(tree_node *x, tree_node *w)
-// {
-//     tree_node *oldw = x->parent->parent;
-//     tree_node *oldwlc = x->parent->right_child;
-//     tree_node *oldwrc = oldw->right_child;
+/**
+ * fix the side effect of delete case 1
+ * 1. adjust the local area of the process that has done the rotation
+ * 2. move any relocated markers from other processes to where 
+ *    they belong after the rotation 
+ *    --> clear all the 'naughty' markers within old local area
+ */
+void fix_up_case1(tree_node *x, tree_node *w)
+{
+    tree_node *oldw = x->parent->parent;
+    tree_node *oldwlc = x->parent->right_child;
+    tree_node *oldwrc = oldw->right_child;
 
-//     // clear markers
-//     if (oldw->marker != DEFAULT_MARKER && oldw->marker == oldwlc->marker) {
-//         x->parent->marker = oldw->marker;
-//     }
+    // clear markers
+    if (oldw->marker != DEFAULT_MARKER && oldw->marker == oldwlc->marker) {
+        x->parent->marker = oldw->marker;
+    }
 
-//     // set w's marker before releasing its flag
-//     oldw->marker = thread_index;
-//     oldw->flag = false;
-//     oldwrc->flag = false;
-//     dbg_printf("[Flag] release %d %d\n", oldw->value, oldwrc->value);
+    // set w's marker before releasing its flag
+    oldw->marker = thread_index;
+    oldw->flag = false;
+    oldwrc->flag = false;
+    dbg_printf("[Flag] release %d %d\n", oldw->value, oldwrc->value);
 
-//     // release the fifth marker
-//     oldw->parent->parent->parent->parent->marker = DEFAULT_MARKER;
+    // release the fifth marker
+    oldw->parent->parent->parent->parent->marker = DEFAULT_MARKER;
 
-//     // get the flag of the new wlc & wrc
-//     // this will always be valid because of markers
-//     // which means others may hold markers on them, but no flags on them
-//     w->left_child->flag = true;
-//     w->right_child->flag = true;
-//     dbg_printf("[Flag] get new %d %d\n", 
-//                 w->left_child->value, w->right_child->value);
+    // get the flag of the new wlc & wrc
+    // this will always be valid because of markers
+    // which means others may hold markers on them, but no flags on them
+    w->left_child->flag = true;
+    w->right_child->flag = true;
+    dbg_printf("[Flag] get new %d %d\n", 
+                w->left_child->value, w->right_child->value);
 
-//     // new local area
-//     vector_clear(&nodes_own_flag);
-//     vector_add(&nodes_own_flag, x);
-//     vector_add(&nodes_own_flag, x->parent);
-//     vector_add(&nodes_own_flag, w);
-//     vector_add(&nodes_own_flag, w->left_child);
-//     vector_add(&nodes_own_flag, w->right_child);
-// }
+    // new local area
+    vector_clear(&nodes_own_flag);
+    vector_add(&nodes_own_flag, x);
+    vector_add(&nodes_own_flag, x->parent);
+    vector_add(&nodes_own_flag, w);
+    vector_add(&nodes_own_flag, w->left_child);
+    vector_add(&nodes_own_flag, w->right_child);
+}
 
-// /**
-//  * fix the side effect of delete case 3
-//  * 1. adjust the local area of the process that has done the rotation
-//  * 2. move any relocated markers from other processes to where 
-//  *    they belong after the rotation
-//  * layout:
-//  *    2
-//  * 1     3
-//  *     4   5
-//  *    6 7
-//  */
-// void fix_up_case3(tree_node *x, tree_node *w)
-// {
-//     int i;
-//     tree_node *oldw = w->right_child;
-//     tree_node *oldwrc = oldw->right_child;
+/**
+ * fix the side effect of delete case 3
+ * 1. adjust the local area of the process that has done the rotation
+ * 2. move any relocated markers from other processes to where 
+ *    they belong after the rotation
+ * layout:
+ *    2
+ * 1     3
+ *     4   5
+ *    6 7
+ */
+void fix_up_case3(tree_node *x, tree_node *w)
+{
+    int i;
+    tree_node *oldw = w->right_child;
+    tree_node *oldwrc = oldw->right_child;
 
-//     // clear all the markers within old local area
-//     for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-//         tree_node *node = vector_get(&nodes_own_flag, i);
-//         // if (node != NULL) {
-//             // node->marker = DEFAULT_MARKER;
-//             node->marker = DEFAULT_MARKER;
-//         // }
-//     }
-//     // get the flag of the new wlc & wrc
-//     // this will always be valid because of markers
-//     // which means others may hold markers on them, but no flags on them
-//     w->left_child->flag = true;
-//     oldwrc->flag = false;
-//     dbg_printf("[Flag] release %d, get %d\n", 
-//                 oldwrc->value, w->left_child->value);
+    // clear all the markers within old local area
+    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
+        tree_node *node = vector_get(&nodes_own_flag, i);
+        // if (node != NULL) {
+            // node->marker = DEFAULT_MARKER;
+            node->marker = DEFAULT_MARKER;
+        // }
+    }
+    // get the flag of the new wlc & wrc
+    // this will always be valid because of markers
+    // which means others may hold markers on them, but no flags on them
+    w->left_child->flag = true;
+    oldwrc->flag = false;
+    dbg_printf("[Flag] release %d, get %d\n", 
+                oldwrc->value, w->left_child->value);
 
-//     // new local area
-//     vector_clear(&nodes_own_flag);
-//     vector_add(&nodes_own_flag, x);
-//     vector_add(&nodes_own_flag, x->parent);
-//     vector_add(&nodes_own_flag, w);
-//     vector_add(&nodes_own_flag, w->left_child);
-//     vector_add(&nodes_own_flag, oldw);
-// }
+    // new local area
+    vector_clear(&nodes_own_flag);
+    vector_add(&nodes_own_flag, x);
+    vector_add(&nodes_own_flag, x->parent);
+    vector_add(&nodes_own_flag, w);
+    vector_add(&nodes_own_flag, w->left_child);
+    vector_add(&nodes_own_flag, oldw);
+}
 
-// /**
-//  * fix the side effect of delete case 1 - mirror case
-//  * 1. adjust the local area of the process that has done the rotation
-//  * 2. move any relocated markers from other processes to where 
-//  *    they belong after the rotation 
-//  *    --> clear all the 'naughty' markers within old local area
-//  */
-// void fix_up_case1_r(tree_node *x, tree_node *w)
-// {
-//     tree_node *oldw = x->parent->parent;
-//     tree_node *oldwlc = oldw->left_child;
-//     tree_node *oldwrc = x->parent->left_child;
+/**
+ * fix the side effect of delete case 1 - mirror case
+ * 1. adjust the local area of the process that has done the rotation
+ * 2. move any relocated markers from other processes to where 
+ *    they belong after the rotation 
+ *    --> clear all the 'naughty' markers within old local area
+ */
+void fix_up_case1_r(tree_node *x, tree_node *w)
+{
+    tree_node *oldw = x->parent->parent;
+    tree_node *oldwlc = oldw->left_child;
+    tree_node *oldwrc = x->parent->left_child;
 
-//     // clear markers
-//     if (oldw->marker != DEFAULT_MARKER && oldw->marker == oldwrc->marker) {
-//         x->parent->marker = oldw->marker;
-//     }
+    // clear markers
+    if (oldw->marker != DEFAULT_MARKER && oldw->marker == oldwrc->marker) {
+        x->parent->marker = oldw->marker;
+    }
 
-//     // set w's marker before releasing its flag
-//     oldw->marker = thread_index;
-//     oldw->flag = false;
-//     oldwlc->flag = false;
-//     dbg_printf("[Flag] release %d %d\n",
-//                oldw->value, oldwlc->value);
-//     // release the fifth marker
-//     oldw->parent->parent->parent->parent->marker = DEFAULT_MARKER;
+    // set w's marker before releasing its flag
+    oldw->marker = thread_index;
+    oldw->flag = false;
+    oldwlc->flag = false;
+    dbg_printf("[Flag] release %d %d\n",
+               oldw->value, oldwlc->value);
+    // release the fifth marker
+    oldw->parent->parent->parent->parent->marker = DEFAULT_MARKER;
 
-//     // get the flag of the new wlc & wrc
-//     // this will always be valid because of markers
-//     // which means others may hold markers on them, but no flags on them
-//     w->left_child->flag = true;
-//     w->right_child->flag = true;
-//     dbg_printf("[Flag] get new %d %d\n",
-//                w->left_child->value, w->right_child->value);
-//     // new local area
-//     vector_clear(&nodes_own_flag);
-//     vector_add(&nodes_own_flag, x);
-//     vector_add(&nodes_own_flag, x->parent);
-//     vector_add(&nodes_own_flag, w);
-//     vector_add(&nodes_own_flag, w->left_child);
-//     vector_add(&nodes_own_flag, w->right_child);
-// }
+    // get the flag of the new wlc & wrc
+    // this will always be valid because of markers
+    // which means others may hold markers on them, but no flags on them
+    w->left_child->flag = true;
+    w->right_child->flag = true;
+    dbg_printf("[Flag] get new %d %d\n",
+               w->left_child->value, w->right_child->value);
+    // new local area
+    vector_clear(&nodes_own_flag);
+    vector_add(&nodes_own_flag, x);
+    vector_add(&nodes_own_flag, x->parent);
+    vector_add(&nodes_own_flag, w);
+    vector_add(&nodes_own_flag, w->left_child);
+    vector_add(&nodes_own_flag, w->right_child);
+}
 
-// /**
-//  * fix the side effect of delete case 3 - mirror case
-//  * 1. adjust the local area of the process that has done the rotation
-//  * 2. move any relocated markers from other processes to where 
-//  *    they belong after the rotation
-//  */
-// void fix_up_case3_r(tree_node *x, tree_node *w)
-// {
-//     int i;
-//     tree_node *oldw = w->left_child;
-//     tree_node *oldwlc = oldw->left_child;
+/**
+ * fix the side effect of delete case 3 - mirror case
+ * 1. adjust the local area of the process that has done the rotation
+ * 2. move any relocated markers from other processes to where 
+ *    they belong after the rotation
+ */
+void fix_up_case3_r(tree_node *x, tree_node *w)
+{
+    int i;
+    tree_node *oldw = w->left_child;
+    tree_node *oldwlc = oldw->left_child;
 
-//     // clear all the markers within old local area
-//     for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-//         tree_node *node = vector_get(&nodes_own_flag, i);
-//         // if (node != NULL) {
-//             // node->marker = DEFAULT_MARKER;
-//             node->marker = DEFAULT_MARKER;
-//         // }
-//     }
+    // clear all the markers within old local area
+    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
+        tree_node *node = vector_get(&nodes_own_flag, i);
+        // if (node != NULL) {
+            // node->marker = DEFAULT_MARKER;
+            node->marker = DEFAULT_MARKER;
+        // }
+    }
 
-//     // get the flag of the new wlc & wrc
-//     // this will always be valid because of markers
-//     // which means others may hold markers on them, but no flags on them
-//     w->right_child->flag = true;
-//     oldwlc->flag = false;
-//     dbg_printf("[Flag] release %d, get %d\n",
-//                oldwlc->value, w->right_child->value);
-//     // new local area
-//     vector_clear(&nodes_own_flag);
-//     vector_add(&nodes_own_flag, x);
-//     vector_add(&nodes_own_flag, x->parent);
-//     vector_add(&nodes_own_flag, w);
-//     vector_add(&nodes_own_flag, oldw);
-//     vector_add(&nodes_own_flag, w->right_child);
-// }
+    // get the flag of the new wlc & wrc
+    // this will always be valid because of markers
+    // which means others may hold markers on them, but no flags on them
+    w->right_child->flag = true;
+    oldwlc->flag = false;
+    dbg_printf("[Flag] release %d, get %d\n",
+               oldwlc->value, w->right_child->value);
+    // new local area
+    vector_clear(&nodes_own_flag);
+    vector_add(&nodes_own_flag, x);
+    vector_add(&nodes_own_flag, x->parent);
+    vector_add(&nodes_own_flag, w);
+    vector_add(&nodes_own_flag, oldw);
+    vector_add(&nodes_own_flag, w->right_child);
+}
 
 /************************ insert ************************/
 /**
@@ -1720,75 +1723,75 @@ tree_node *move_inserter_up(tree_node *oldx, vector *local_area)
     return newx;
 }
 
-// /**
-//  * find a node by getting flag hand over hand
-//  * restart when conflict happens
-//  */
-// tree_node *par_find(tree_node *root, int value)
-// {
-//     bool expect;
-//     tree_node *root_node;
-//     tree_node *y;
-//     tree_node *z;
+/**
+ * find a node by getting flag hand over hand
+ * restart when conflict happens
+ */
+tree_node *par_find(tree_node *root, int value)
+{
+    bool expect;
+    tree_node *root_node;
+    tree_node *y;
+    tree_node *z;
 
-// restart:
-//     do {
-//         root_node = root->left_child;
-//         expect = false;
-//     } while (!__sync_bool_compare_and_swap(&root_node->flag, expect, true));
+restart:
+    do {
+        root_node = root->left_child;
+        expect = false;
+    } while (!__sync_bool_compare_and_swap(&root_node->flag, expect, true));
     
-//     y = root_node;
-//     z = NULL;
+    y = root_node;
+    z = NULL;
 
-//     while (!y->is_leaf) {
-//         z = y; // store old y
-//         if (value == y->value)
-//             return y; // find the node y
-//         else if (value > y->value)
-//             y = y->right_child;
-//         else
-//             y = y->left_child;
+    while (!y->is_leaf) {
+        z = y; // store old y
+        if (value == y->value)
+            return y; // find the node y
+        else if (value > y->value)
+            y = y->right_child;
+        else
+            y = y->left_child;
         
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&y->flag, expect, true)) {
-//             z->flag = false; // release held flag
-//             msleep(100);
-//             goto restart;
-//         }
-//         if (!y->is_leaf)
-//             z->flag = false; // release old y's flag
-//     }
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&y->flag, expect, true)) {
+            z->flag = false; // release held flag
+            msleep(100);
+            goto restart;
+        }
+        if (!y->is_leaf)
+            z->flag = false; // release old y's flag
+    }
     
-//     dbg_printf("[WARNING] node with value %d not found.\n", value);
-//     return NULL; // node not found
-// }
+    dbg_printf("[WARNING] node with value %d not found.\n", value);
+    return NULL; // node not found
+}
 
-// /**
-//  * find a node's successor on the left
-//  * already make sure that the delete node have two non-leaf children
-//  * by getting flag hand over hand
-//  * restart when conflict happens
-//  */
-// tree_node *par_find_successor(tree_node *delete_node)
-// {
-//     bool expect;
-//     // we already hold the flag of delete_node
+/**
+ * find a node's successor on the left
+ * already make sure that the delete node have two non-leaf children
+ * by getting flag hand over hand
+ * restart when conflict happens
+ */
+tree_node *par_find_successor(tree_node *delete_node)
+{
+    bool expect;
+    // we already hold the flag of delete_node
 
-//     tree_node *y = delete_node->right_child;
-//     tree_node *z = NULL;
+    tree_node *y = delete_node->right_child;
+    tree_node *z = NULL;
 
-//     while (!y->left_child->is_leaf) {
-//         z = y; // store old y
-//         y = y->left_child;
+    while (!y->left_child->is_leaf) {
+        z = y; // store old y
+        y = y->left_child;
 
-//         expect = false;
-//         if (!__sync_bool_compare_and_swap(&y->flag, expect, true)) {
-//             z->flag = false; // release held flag
-//             return NULL; // restart outside
-//         }
+        expect = false;
+        if (!__sync_bool_compare_and_swap(&y->flag, expect, true)) {
+            z->flag = false; // release held flag
+            return NULL; // restart outside
+        }
         
-//         z->flag = false; // release old y's flag
-//     }
+        z->flag = false; // release old y's flag
+    }
     
-//     return y; // successor found
-// }
+    return y; // successor found
+}

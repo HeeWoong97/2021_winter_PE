@@ -10,10 +10,7 @@
 #include <linux/types.h>
 #include <linux/mutex.h>
 
-// __thread long thread_index;
 extern bool remove_dbg; // for only debug remove
-
-// struct mutex show_tree_lock;
 
 /*
 #define DEBUG
@@ -60,8 +57,8 @@ void vector_init(vector *v);
 int vector_total(vector *v);
 void vector_add(vector *v, void *item);
 void *vector_get(vector *v, int index);
-void vector_delete(vector *v, int index);
 void vector_clear(vector *v);
+void vector_delete(vector *v, int index);
 
 /* function prototypes */
 /* main functions */

@@ -14,8 +14,8 @@
  ******************/
 
 /* thread-local variables */
-__thread vector nodes_own_flag;
-__thread long thread_index;
+vector nodes_own_flag;
+long thread_index;
 
 /**
  * cannot find a 'extern' way to use thread_local variables

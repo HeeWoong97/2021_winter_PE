@@ -10,7 +10,7 @@
 #include <linux/delay.h>
 #include <linux/types.h>
 
-extern __thread long thread_index;
+extern long thread_index;
 extern bool remove_dbg; // for only debug remove
 
 #define DEBUG

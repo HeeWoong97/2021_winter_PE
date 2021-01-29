@@ -9,7 +9,7 @@
 #include <linux/delay.h>
 #include <linux/types.h>
 
-extern __thread long thread_index;
+extern long thread_index;
 
 /**
  * initialize red-black tree and return its root
