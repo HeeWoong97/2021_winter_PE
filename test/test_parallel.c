@@ -1,5 +1,4 @@
 #include "tree.h"
-#include "vector_arr.h"
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -11,13 +10,16 @@
 #include <linux/types.h>
 #include <linux/random.h>
 #include <linux/ktime.h>
+#include <linux/sched.h>
+
+#define NUM_OF_DATA     100000
 
 vector THREADS_NUM_LIST;
 vector test_time_list;
 
 int total_size = 0; 
 int size_per_thread = 0;
-int numbers[1000001];
+int numbers[NUM_OF_DATA];
 tree_node *root;
 int sleep_time = 0;
 
@@ -31,34 +33,35 @@ void generate_data(void)
     int random;
     int tmp;
     
-    for (i = 0; i < 10000000; i++) {
+    for (i = 0; i < NUM_OF_DATA; i++) {
         numbers[i] = i + 1;
         total_size++;
     }
-    for (i = 0; i < 10000000 - 1; i++) {
+    for (i = 0; i < NUM_OF_DATA - 1; i++) {
         get_random_bytes(&random, sizeof(int));
-        random %= (10000000 - 1) + i;
+        random %= (NUM_OF_DATA - 1) + i;
         tmp = numbers[i];
         numbers[i] = numbers[random];
         numbers[random] = tmp;
     }
 }
 
-int run_insert(void *data)
+int run_insert(void *arg)
 {
     int *p;
     int *start;
     int count;
     int element;
     int i;
+    long data = (long)(int*)arg;
 
-    p = numbers + ((long)data) * size_per_thread;
+    p = numbers + (data) * size_per_thread;
     start = p;
     count = size_per_thread;
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        rb_insert(root, element, (long)data);
+        rb_insert(root, element, data);
     }
     finish++;
 
@@ -69,7 +72,8 @@ int run_multi_thread_insert(int thread_count)
 {
     int i;
     ktime_t start, end;
-    struct task_struct *thread[thread_count];
+    struct task_struct *thread[16];
+    int arg;
     
     size_per_thread = total_size / thread_count;
 
@@ -77,7 +81,8 @@ int run_multi_thread_insert(int thread_count)
 
     thread_count--;
     for (i = 0; i < thread_count; i++) {
-        thread[i + 1] = kthread_run(&run_insert, (void *)(i + 1), "insert");
+        arg = i + 1;
+        thread[i + 1] = kthread_run(&run_insert, (void *)(&arg), "insert");
     }
 
     run_insert(0);
@@ -92,24 +97,26 @@ int run_multi_thread_insert(int thread_count)
     }
 
     printk("time taken by insert with %d thread: %lld nsec\n", thread_count, end - start);
+    
     return 0;
 }
 
-int run_remove(void *data)
+int run_remove(void *arg)
 {
     int *p;
     int *start;
     int count;
     int element;
     int i;
+    long data = (long)(int*)arg;
 
-    p = numbers + ((long)data) * size_per_thread;
+    p = numbers + (data) * size_per_thread;
     start = p;
     count = size_per_thread;
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        rb_remove(root, element, (long)data);
+        rb_remove(root, element, data);
     }
     finish++;
 
@@ -120,7 +127,8 @@ int run_multi_thread_remove(int thread_count)
 {
     int i;
     ktime_t start, end;
-    struct task_struct *thread[thread_count];
+    struct task_struct *thread[16];
+    int arg;
     
     size_per_thread = total_size / thread_count;
 
@@ -128,7 +136,8 @@ int run_multi_thread_remove(int thread_count)
 
     thread_count--;
     for (i = 0; i < thread_count; i++) {
-        thread[i + 1] = kthread_run(&run_remove, (void *)(i + 1), "remove");
+        arg = i + 1;
+        thread[i + 1] = kthread_run(&run_remove, (void *)(&arg), "remove");
     }
 
     run_remove(0);
@@ -143,28 +152,22 @@ int run_multi_thread_remove(int thread_count)
     }
 
     printk("time taken by insert with %d thread: %lld nsec\n", thread_count, end - start);
+    
     return 0;
 }
 
 void rbtree_test(void)
 {
     int i;
-    int threads_num1 = 1, threads_num2 = 2, threads_num3 = 4, threads_num4 = 8, threads_num5 = 16;
+    int threads_num[5] = {1, 2, 4, 8, 16};
     int num_processes_i = 1;
     int num_processes_r = 1;
     int thread_num;
 
-    vector_init(&THREADS_NUM_LIST);
-    vector_add(&THREADS_NUM_LIST, &threads_num1); 
-    vector_add(&THREADS_NUM_LIST, &threads_num2); 
-    vector_add(&THREADS_NUM_LIST, &threads_num3); 
-    vector_add(&THREADS_NUM_LIST, &threads_num4); 
-    vector_add(&THREADS_NUM_LIST, &threads_num5);
-
     generate_data();
     printk("total_size: %d\n", total_size);
-    for (i = 0; i < vector_total(&THREADS_NUM_LIST); i++) {
-        thread_num = *((int *)vector_get(&THREADS_NUM_LIST, i));
+    for (i = 0; i < 5; i++) {
+        thread_num = threads_num[i];
         num_processes_r = num_processes_i = thread_num;
 
         root = rb_init();
