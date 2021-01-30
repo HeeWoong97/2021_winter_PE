@@ -13,9 +13,9 @@
  * helper function
  ******************/
 
-/* thread-local variables */
-vector nodes_own_flag;
-long thread_index;
+// /* thread-local variables */
+// vector nodes_own_flag;
+// long thread_index;
 
 /**
  * cannot find a 'extern' way to use thread_local variables
@@ -23,39 +23,39 @@ long thread_index;
  */
 void thread_index_init(long i)
 {
-    thread_index[i] = i;
+    long thread_index = i;
 }
 
 /**
  * clear local area
  */
-void clear_local_area(void)
+void clear_local_area(vector *nodes_own_flag)
 {   
     int i;
 
-    if (vector_total(&nodes_own_flag) == 0) return;
+    if (vector_total(nodes_own_flag) == 0) return;
     dbg_printf("[Flag] Clear\n");
-    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-        tree_node *node = vector_get(&nodes_own_flag, i);
+    for (i = 0; i < vector_total(nodes_own_flag); i++) {
+        tree_node *node = vector_get(nodes_own_flag, i);
         // if (node != NULL) {
             node->flag = false;
             dbg_printf("[Flag]      %d, 0x%lx, %d\n",
                     node->value, (unsigned long)node, (int)node->flag);
         // }
     }
-    vector_clear(&nodes_own_flag);
+    vector_clear(nodes_own_flag);
     // vector_free(&nodes_own_flag);
 }
 
 /**
  * true if the node is in our local area
  */
-bool is_in_local_area(tree_node *target_node)
+bool is_in_local_area(tree_node *target_node, vector *nodes_own_flag)
 {
     int i;
 
-    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-        tree_node *node = vector_get(&nodes_own_flag, i);
+    for (i = 0; i < vector_total(nodes_own_flag); i++) {
+        tree_node *node = vector_get(nodes_own_flag, i);
         // if (node != NULL) {
             if (node == target_node) return true;        
         // }
@@ -86,7 +86,7 @@ bool has_no_others_marker(tree_node *t, tree_node *z,
  * @params:
  *      start - parent node of the actual node to be deleted
  */
-bool get_markers_above(tree_node *start, tree_node *z, bool release)
+bool get_markers_above(tree_node *start, tree_node *z, bool release, long thread_index)
 {
     bool expect;
 
@@ -204,7 +204,7 @@ bool get_markers_above(tree_node *start, tree_node *z, bool release)
  *  z: target node (replace value)
  *  y: actually delete node
  */
-bool setup_local_area_for_delete(tree_node *y, tree_node *z)
+bool setup_local_area_for_delete(tree_node *y, tree_node *z, vector *nodes_own_flag, long thread_index)
 {
     bool expect;
     tree_node *x;
@@ -268,7 +268,7 @@ bool setup_local_area_for_delete(tree_node *y, tree_node *z)
     }
 
     // get four markers above to keep distance with other threads
-    if (!get_markers_above(yp, z, true)) {
+    if (!get_markers_above(yp, z, true, thread_index)) {
         x->flag = false;
         w->flag = false;
         if (!w->is_leaf) {
@@ -281,13 +281,13 @@ bool setup_local_area_for_delete(tree_node *y, tree_node *z)
     }
 
     // local area setup
-    vector_init(&nodes_own_flag);
-    vector_add(&nodes_own_flag, x);
-    vector_add(&nodes_own_flag, w);
-    vector_add(&nodes_own_flag, yp);
+    vector_init(nodes_own_flag);
+    vector_add(nodes_own_flag, x);
+    vector_add(nodes_own_flag, w);
+    vector_add(nodes_own_flag, yp);
     if (!w->is_leaf) {
-        vector_add(&nodes_own_flag, wlc);
-        vector_add(&nodes_own_flag, wrc);
+        vector_add(nodes_own_flag, wlc);
+        vector_add(nodes_own_flag, wrc);
         dbg_printf("[Flag] local area: %d %d %d %d %d\n",
                    x->value, w->value, yp->value, wlc->value, wrc->value);
     }
@@ -303,7 +303,7 @@ bool setup_local_area_for_delete(tree_node *y, tree_node *z)
  * add intention markers (four is sufficient) as needed
  * and additional one (remove moveUp) or two (insert moveUp) markers
  */
-bool get_flags_and_markers_above(tree_node *start, int numAdditional)
+bool get_flags_and_markers_above(tree_node *start, int numAdditional, long thread_index)
 {
     /**
      * Check for a moveUpStruct provided by another process (due to 
@@ -321,7 +321,7 @@ bool get_flags_and_markers_above(tree_node *start, int numAdditional)
     tree_node *secondnew;
 
     // get markers first and do not release flag
-    if (!get_markers_above(start, NULL, false))
+    if (!get_markers_above(start, NULL, false, thread_index))
         return false;
 
     pos1 = start->parent;
@@ -410,7 +410,7 @@ bool get_flags_and_markers_above(tree_node *start, int numAdditional)
  *      start - parent node of the actual node to be deleted
  *      z - the node returned by par_find()
  */
-bool release_markers_above(tree_node *start, tree_node *z)
+bool release_markers_above(tree_node *start, tree_node *z, long thread_index)
 {
     bool expect;
     
@@ -487,7 +487,7 @@ bool release_markers_above(tree_node *start, tree_node *z)
  * move a deleter up the tree
  * case 2 in deletion
  */
-tree_node *move_deleter_up(tree_node *oldx)
+tree_node *move_deleter_up(tree_node *oldx, vector *nodes_own_flag, long thread_index)
 {
     bool expect;
     tree_node *oldp;
@@ -510,7 +510,7 @@ tree_node *move_deleter_up(tree_node *oldx)
 
     // extend intention markers (getting flags to set them)
     // from oldgp to top and one more. Also convert marker on oldgp to a flag
-    while (!get_flags_and_markers_above(oldp, 1))
+    while (!get_flags_and_markers_above(oldp, 1, thread_index))
         ;
     
     // get flags on the rest of new local area (w, wlc, wrc)
@@ -556,12 +556,12 @@ restart:
     newx->parent->marker = DEFAULT_MARKER;
 
     // new local area
-    vector_clear(&nodes_own_flag);
-    vector_add(&nodes_own_flag, newx);
-    vector_add(&nodes_own_flag, neww);
-    vector_add(&nodes_own_flag, newp);
-    vector_add(&nodes_own_flag, newwlc);
-    vector_add(&nodes_own_flag, newwrc);
+    vector_clear(nodes_own_flag);
+    vector_add(nodes_own_flag, newx);
+    vector_add(nodes_own_flag, neww);
+    vector_add(nodes_own_flag, newp);
+    vector_add(nodes_own_flag, newwlc);
+    vector_add(nodes_own_flag, newwrc);
     dbg_printf("[Flag] get new local area: %d %d %d %d %d\n",
                newx->value, neww->value, newp->value, 
                newwlc->value, newwrc->value);
@@ -576,7 +576,7 @@ restart:
  *    they belong after the rotation 
  *    --> clear all the 'naughty' markers within old local area
  */
-void fix_up_case1(tree_node *x, tree_node *w)
+void fix_up_case1(tree_node *x, tree_node *w, vector *nodes_own_flag, long thread_index)
 {
     tree_node *oldw = x->parent->parent;
     tree_node *oldwlc = x->parent->right_child;
@@ -605,12 +605,12 @@ void fix_up_case1(tree_node *x, tree_node *w)
                 w->left_child->value, w->right_child->value);
 
     // new local area
-    vector_clear(&nodes_own_flag);
-    vector_add(&nodes_own_flag, x);
-    vector_add(&nodes_own_flag, x->parent);
-    vector_add(&nodes_own_flag, w);
-    vector_add(&nodes_own_flag, w->left_child);
-    vector_add(&nodes_own_flag, w->right_child);
+    vector_clear(nodes_own_flag);
+    vector_add(nodes_own_flag, x);
+    vector_add(nodes_own_flag, x->parent);
+    vector_add(nodes_own_flag, w);
+    vector_add(nodes_own_flag, w->left_child);
+    vector_add(nodes_own_flag, w->right_child);
 }
 
 /**
@@ -624,15 +624,15 @@ void fix_up_case1(tree_node *x, tree_node *w)
  *     4   5
  *    6 7
  */
-void fix_up_case3(tree_node *x, tree_node *w)
+void fix_up_case3(tree_node *x, tree_node *w, vector *nodes_own_flag)
 {
     int i;
     tree_node *oldw = w->right_child;
     tree_node *oldwrc = oldw->right_child;
 
     // clear all the markers within old local area
-    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-        tree_node *node = vector_get(&nodes_own_flag, i);
+    for (i = 0; i < vector_total(nodes_own_flag); i++) {
+        tree_node *node = vector_get(nodes_own_flag, i);
         // if (node != NULL) {
             // node->marker = DEFAULT_MARKER;
             node->marker = DEFAULT_MARKER;
@@ -647,12 +647,12 @@ void fix_up_case3(tree_node *x, tree_node *w)
                 oldwrc->value, w->left_child->value);
 
     // new local area
-    vector_clear(&nodes_own_flag);
-    vector_add(&nodes_own_flag, x);
-    vector_add(&nodes_own_flag, x->parent);
-    vector_add(&nodes_own_flag, w);
-    vector_add(&nodes_own_flag, w->left_child);
-    vector_add(&nodes_own_flag, oldw);
+    vector_clear(nodes_own_flag);
+    vector_add(nodes_own_flag, x);
+    vector_add(nodes_own_flag, x->parent);
+    vector_add(nodes_own_flag, w);
+    vector_add(nodes_own_flag, w->left_child);
+    vector_add(nodes_own_flag, oldw);
 }
 
 /**
@@ -662,7 +662,7 @@ void fix_up_case3(tree_node *x, tree_node *w)
  *    they belong after the rotation 
  *    --> clear all the 'naughty' markers within old local area
  */
-void fix_up_case1_r(tree_node *x, tree_node *w)
+void fix_up_case1_r(tree_node *x, tree_node *w, vector *nodes_own_flag, long thread_index)
 {
     tree_node *oldw = x->parent->parent;
     tree_node *oldwlc = oldw->left_child;
@@ -690,12 +690,12 @@ void fix_up_case1_r(tree_node *x, tree_node *w)
     dbg_printf("[Flag] get new %d %d\n",
                w->left_child->value, w->right_child->value);
     // new local area
-    vector_clear(&nodes_own_flag);
-    vector_add(&nodes_own_flag, x);
-    vector_add(&nodes_own_flag, x->parent);
-    vector_add(&nodes_own_flag, w);
-    vector_add(&nodes_own_flag, w->left_child);
-    vector_add(&nodes_own_flag, w->right_child);
+    vector_clear(nodes_own_flag);
+    vector_add(nodes_own_flag, x);
+    vector_add(nodes_own_flag, x->parent);
+    vector_add(nodes_own_flag, w);
+    vector_add(nodes_own_flag, w->left_child);
+    vector_add(nodes_own_flag, w->right_child);
 }
 
 /**
@@ -704,15 +704,15 @@ void fix_up_case1_r(tree_node *x, tree_node *w)
  * 2. move any relocated markers from other processes to where 
  *    they belong after the rotation
  */
-void fix_up_case3_r(tree_node *x, tree_node *w)
+void fix_up_case3_r(tree_node *x, tree_node *w, vector *nodes_own_flag)
 {
     int i;
     tree_node *oldw = w->left_child;
     tree_node *oldwlc = oldw->left_child;
 
     // clear all the markers within old local area
-    for (i = 0; i < vector_total(&nodes_own_flag); i++) {
-        tree_node *node = vector_get(&nodes_own_flag, i);
+    for (i = 0; i < vector_total(nodes_own_flag); i++) {
+        tree_node *node = vector_get(nodes_own_flag, i);
         // if (node != NULL) {
             // node->marker = DEFAULT_MARKER;
             node->marker = DEFAULT_MARKER;
@@ -727,12 +727,12 @@ void fix_up_case3_r(tree_node *x, tree_node *w)
     dbg_printf("[Flag] release %d, get %d\n",
                oldwlc->value, w->right_child->value);
     // new local area
-    vector_clear(&nodes_own_flag);
-    vector_add(&nodes_own_flag, x);
-    vector_add(&nodes_own_flag, x->parent);
-    vector_add(&nodes_own_flag, w);
-    vector_add(&nodes_own_flag, oldw);
-    vector_add(&nodes_own_flag, w->right_child);
+    vector_clear(nodes_own_flag);
+    vector_add(nodes_own_flag, x);
+    vector_add(nodes_own_flag, x->parent);
+    vector_add(nodes_own_flag, w);
+    vector_add(nodes_own_flag, oldw);
+    vector_add(nodes_own_flag, w->right_child);
 }
 
 /************************ insert ************************/
