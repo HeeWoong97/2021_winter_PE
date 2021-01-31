@@ -24,8 +24,6 @@ tree_node *rb_init(void)
     tree_node *dummy_sibling = create_dummy_node();
     tree_node *root = create_dummy_node();
 
-    printk("create dummy node finished (PID: %d)\n", current->pid);
-
     dummy_sibling->parent = root;
     root->parent = dummy5;
     dummy5->parent = dummy4;
@@ -45,6 +43,7 @@ tree_node *rb_init(void)
     dummy5->left_child = root;
     free_node(root->right_child);
     root->right_child = dummy_sibling;
+
     return root;
 }
 

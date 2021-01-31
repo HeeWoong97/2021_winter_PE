@@ -16,15 +16,15 @@ extern bool remove_dbg; // for only debug remove
 
 // #define DEBUG
 // #ifdef DEBUG
-#define dbg_printf(fmt, ...) \
-        do {                 \
-            if (remove_dbg)  \
-                printk("T[%d] %s line:%d %s():" fmt, current->pid, \
-                __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-        } while(0)
+// #define dbg_printf(fmt, ...) \
+//         do {                 \
+//             if (remove_dbg)  \
+//                 printk("T[%d] %s line:%d %s():" fmt, current->pid, \
+//                 __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+//         } while(0)
 
 // #else
-// #define dbg_printf(...)
+#define dbg_printf(...)
 // #endif
 
 #define RED 0

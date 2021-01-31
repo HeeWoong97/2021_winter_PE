@@ -23,7 +23,6 @@ struct mutex show_tree_lock;
 tree_node *create_dummy_node(void)
 {
     tree_node *node;
-    printk("create dummy node (PID: %d)", current->pid);
     node = (tree_node *)kmalloc(sizeof(tree_node), GFP_KERNEL);
     node->color = BLACK;
     node->value = __INT32_MAX__;
