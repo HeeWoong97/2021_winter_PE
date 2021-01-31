@@ -17,14 +17,14 @@
 // vector nodes_own_flag;
 // long thread_index;
 
-/**
- * cannot find a 'extern' way to use thread_local variables
- * across files
- */
-void thread_index_init(long i)
-{
-    long thread_index = i;
-}
+// /**
+//  * cannot find a 'extern' way to use thread_local variables
+//  * across files
+//  */
+// void thread_index_init(long i)
+// {
+//     long thread_index = i;
+// }
 
 /**
  * clear local area

@@ -9,21 +9,22 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/types.h>
+#include <linux/sched.h>
 
 // extern long thread_index;
 extern bool remove_dbg; // for only debug remove
 
 // #define DEBUG
 // #ifdef DEBUG
-// #define dbg_printf(fmt, ...) \
-//         do {                 \
-//             if (remove_dbg)  \
-//                 printk("T[%ld] %s line:%d %s():" fmt, thread_index, \
-//                 __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-//         } while(0)
+#define dbg_printf(fmt, ...) \
+        do {                 \
+            if (remove_dbg)  \
+                printk("T[%d] %s line:%d %s():" fmt, current->pid, \
+                __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+        } while(0)
 
 // #else
-#define dbg_printf(...)
+// #define dbg_printf(...)
 // #endif
 
 #define RED 0
@@ -48,7 +49,7 @@ typedef struct tree_node_t
 
 /* function prototypes */
 /* main functions */
-void thread_index_init(long thread_index);
+// void thread_index_init(long thread_index);
 tree_node *rb_init(void);
 void right_rotate(tree_node *root, tree_node *node);
 void left_rotate(tree_node *root, tree_node *node);

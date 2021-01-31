@@ -8,18 +8,20 @@
 #include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/types.h>
-#include <linux/random.h>
+// #include <linux/random.h>
 #include <linux/ktime.h>
 #include <linux/sched.h>
 
-#define NUM_OF_DATA     100000
+#define NUM_OF_DATA     10
 
 vector THREADS_NUM_LIST;
 vector test_time_list;
 
+bool remove_dbg = true;
+
 int total_size = 0; 
 int size_per_thread = 0;
-int numbers[NUM_OF_DATA];
+int numbers[10];
 tree_node *root;
 int sleep_time = 0;
 
@@ -30,20 +32,20 @@ extern struct mutex show_tree_lock;
 void generate_data(void)
 {
     int i;
-    int random;
-    int tmp;
+    // int random;
+    // int tmp;
     
     for (i = 0; i < NUM_OF_DATA; i++) {
         numbers[i] = i + 1;
         total_size++;
     }
-    for (i = 0; i < NUM_OF_DATA - 1; i++) {
-        get_random_bytes(&random, sizeof(int));
-        random %= (NUM_OF_DATA - 1) + i;
-        tmp = numbers[i];
-        numbers[i] = numbers[random];
-        numbers[random] = tmp;
-    }
+    // for (i = 0; i < NUM_OF_DATA - 1; i++) {
+    //     get_random_bytes(&random, sizeof(int));
+    //     random %= (NUM_OF_DATA - 1) + i;
+    //     tmp = numbers[i];
+    //     numbers[i] = numbers[random];
+    //     numbers[random] = tmp;
+    // }
 }
 
 int run_insert(void *arg)
@@ -53,15 +55,19 @@ int run_insert(void *arg)
     int count;
     int element;
     int i;
-    long data = (long)(int*)arg;
+    long data = (long)(*(int*)arg);
 
     p = numbers + (data) * size_per_thread;
     start = p;
     count = size_per_thread;
 
+    printk("start run_insert (PID: %d)\n", current->pid);
+
     for (i = 0; i < count; i++) {
         element = start[i];
+        printk("inserting element: %d (PID: %d)\n", element, current->pid);
         rb_insert(root, element, data);
+        dbg_printf("[RUN] finish inserting element %d\n", element);
     }
     finish++;
 
@@ -82,6 +88,7 @@ int run_multi_thread_insert(int thread_count)
     thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg = i + 1;
+        printk("arg: %d\n", arg);
         thread[i + 1] = kthread_run(&run_insert, (void *)(&arg), "insert");
     }
 
@@ -108,7 +115,7 @@ int run_remove(void *arg)
     int count;
     int element;
     int i;
-    long data = (long)(int*)arg;
+    long data = (long)(*(int*)arg);
 
     p = numbers + (data) * size_per_thread;
     start = p;
@@ -116,7 +123,9 @@ int run_remove(void *arg)
 
     for (i = 0; i < count; i++) {
         element = start[i];
+        printk("removing element: %d (PID: %d)\n", element, current->pid);
         rb_remove(root, element, data);
+        dbg_printf("[RUN] finish removing element %d\n", element);
     }
     finish++;
 
