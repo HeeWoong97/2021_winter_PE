@@ -1,6 +1,5 @@
-#include <linux/module.h>
-#define INCLUDE_VERMAGIC
 #include <linux/build-salt.h>
+#include <linux/module.h>
 #include <linux/vermagic.h>
 #include <linux/compiler.h>
 
@@ -26,4 +25,4 @@ MODULE_INFO(retpoline, "Y");
 MODULE_INFO(depends, "");
 
 
-MODULE_INFO(srcversion, "08283788F118284FEACB2F2");
+MODULE_INFO(srcversion, "ED8B7FFF8B98B552CF307EF");

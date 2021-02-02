@@ -18,13 +18,20 @@ void rbtree_test(void)
 
     long thread_index = 0;
 
+    printk("insert 3...\n");
     rb_insert(root, 3, thread_index);
+    printk("insert 5...\n");
     rb_insert(root, 5, thread_index);
+    printk("insert 15...\n");
     rb_insert(root, 15, thread_index);
+    printk("insert 1...\n");
     rb_insert(root, 1, thread_index);
+    printk("insert 2...\n");
     rb_insert(root, 2, thread_index);
     // show_tree(root);
+    printk("insert 7...\n");
     rb_insert(root, 7, thread_index);
+    printk("insert 6...\n");
     rb_insert(root, 6, thread_index);
     show_tree(root);
     // rb_remove(root, 2);

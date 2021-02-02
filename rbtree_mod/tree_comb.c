@@ -910,7 +910,7 @@ void clear_local_area(void)
     dbg_printf("[Flag] Clear\n");
     for (i = 0; i < vector_total(&nodes_own_flag); i++) {
         node = vector_get(&nodes_own_flag, i);
-        // node->flag = false; // ??
+        node->flag = false;
         dbg_printf("[Flag]      %d, 0x%lx, %d\n",
                 node->value, (unsigned long)node, (int)node->flag);
     }
