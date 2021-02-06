@@ -1,0 +1,489 @@
+
+utils.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <show_tree>:
+   0:	e8 00 00 00 00       	callq  5 <show_tree+0x5>
+   5:	55                   	push   %rbp
+   6:	48 c7 c2 00 00 00 00 	mov    $0x0,%rdx
+   d:	48 c7 c6 00 00 00 00 	mov    $0x0,%rsi
+  14:	48 89 e5             	mov    %rsp,%rbp
+  17:	41 55                	push   %r13
+  19:	41 54                	push   %r12
+  1b:	53                   	push   %rbx
+  1c:	48 89 fb             	mov    %rdi,%rbx
+  1f:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  26:	48 81 ec a0 01 00 00 	sub    $0x1a0,%rsp
+  2d:	65 48 8b 04 25 28 00 	mov    %gs:0x28,%rax
+  34:	00 00 
+  36:	48 89 45 e0          	mov    %rax,-0x20(%rbp)
+  3a:	31 c0                	xor    %eax,%eax
+  3c:	e8 00 00 00 00       	callq  41 <show_tree+0x41>
+  41:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  48:	e8 00 00 00 00       	callq  4d <show_tree+0x4d>
+  4d:	80 3d 00 00 00 00 00 	cmpb   $0x0,0x0(%rip)        # 54 <show_tree+0x54>
+  54:	0f 84 00 00 00 00    	je     5a <show_tree+0x5a>
+  5a:	e9 00 00 00 00       	jmpq   5f <show_tree+0x5f>
+  5f:	90                   	nop
+
+0000000000000060 <is_root>:
+  60:	e8 00 00 00 00       	callq  65 <is_root+0x5>
+  65:	55                   	push   %rbp
+  66:	48 39 3e             	cmp    %rdi,(%rsi)
+  69:	0f 94 c0             	sete   %al
+  6c:	48 89 e5             	mov    %rsp,%rbp
+  6f:	5d                   	pop    %rbp
+  70:	c3                   	retq   
+  71:	66 66 2e 0f 1f 84 00 	data16 nopw %cs:0x0(%rax,%rax,1)
+  78:	00 00 00 00 
+  7c:	0f 1f 40 00          	nopl   0x0(%rax)
+
+0000000000000080 <create_leaf_node>:
+  80:	e8 00 00 00 00       	callq  85 <create_leaf_node+0x5>
+  85:	55                   	push   %rbp
+  86:	ba 28 00 00 00       	mov    $0x28,%edx
+  8b:	be c0 0c 00 00       	mov    $0xcc0,%esi
+  90:	48 8b 3d 00 00 00 00 	mov    0x0(%rip),%rdi        # 97 <create_leaf_node+0x17>
+  97:	48 89 e5             	mov    %rsp,%rbp
+  9a:	e8 00 00 00 00       	callq  9f <create_leaf_node+0x1f>
+  9f:	ba 01 01 00 00       	mov    $0x101,%edx
+  a4:	48 c7 40 08 00 00 00 	movq   $0x0,0x8(%rax)
+  ab:	00 
+  ac:	48 c7 40 10 00 00 00 	movq   $0x0,0x10(%rax)
+  b3:	00 
+  b4:	c7 40 18 00 00 00 00 	movl   $0x0,0x18(%rax)
+  bb:	66 89 50 1c          	mov    %dx,0x1c(%rax)
+  bf:	c6 40 1f 00          	movb   $0x0,0x1f(%rax)
+  c3:	c7 40 20 ff ff ff ff 	movl   $0xffffffff,0x20(%rax)
+  ca:	5d                   	pop    %rbp
+  cb:	c3                   	retq   
+  cc:	0f 1f 40 00          	nopl   0x0(%rax)
+
+00000000000000d0 <create_dummy_node>:
+  d0:	e8 00 00 00 00       	callq  d5 <create_dummy_node+0x5>
+  d5:	55                   	push   %rbp
+  d6:	ba 28 00 00 00       	mov    $0x28,%edx
+  db:	be c0 0c 00 00       	mov    $0xcc0,%esi
+  e0:	48 8b 3d 00 00 00 00 	mov    0x0(%rip),%rdi        # e7 <create_dummy_node+0x17>
+  e7:	48 89 e5             	mov    %rsp,%rbp
+  ea:	41 54                	push   %r12
+  ec:	e8 00 00 00 00       	callq  f1 <create_dummy_node+0x21>
+  f1:	c6 40 1c 01          	movb   $0x1,0x1c(%rax)
+  f5:	49 89 c4             	mov    %rax,%r12
+  f8:	c7 40 18 ff ff ff 7f 	movl   $0x7fffffff,0x18(%rax)
+  ff:	e8 00 00 00 00       	callq  104 <create_dummy_node+0x34>
+ 104:	49 89 44 24 08       	mov    %rax,0x8(%r12)
+ 109:	e8 00 00 00 00       	callq  10e <create_dummy_node+0x3e>
+ 10e:	41 c6 44 24 1d 00    	movb   $0x0,0x1d(%r12)
+ 114:	49 89 44 24 10       	mov    %rax,0x10(%r12)
+ 119:	4c 89 e0             	mov    %r12,%rax
+ 11c:	49 c7 04 24 00 00 00 	movq   $0x0,(%r12)
+ 123:	00 
+ 124:	41 c6 44 24 1f 00    	movb   $0x0,0x1f(%r12)
+ 12a:	41 c7 44 24 20 ff ff 	movl   $0xffffffff,0x20(%r12)
+ 131:	ff ff 
+ 133:	41 5c                	pop    %r12
+ 135:	5d                   	pop    %rbp
+ 136:	c3                   	retq   
+ 137:	66 0f 1f 84 00 00 00 	nopw   0x0(%rax,%rax,1)
+ 13e:	00 00 
+
+0000000000000140 <create_node>:
+ 140:	e8 00 00 00 00       	callq  145 <create_node+0x5>
+ 145:	55                   	push   %rbp
+ 146:	ba 28 00 00 00       	mov    $0x28,%edx
+ 14b:	be c0 0c 00 00       	mov    $0xcc0,%esi
+ 150:	48 89 e5             	mov    %rsp,%rbp
+ 153:	41 54                	push   %r12
+ 155:	53                   	push   %rbx
+ 156:	89 fb                	mov    %edi,%ebx
+ 158:	48 8b 3d 00 00 00 00 	mov    0x0(%rip),%rdi        # 15f <create_node+0x1f>
+ 15f:	e8 00 00 00 00       	callq  164 <create_node+0x24>
+ 164:	89 58 18             	mov    %ebx,0x18(%rax)
+ 167:	49 89 c4             	mov    %rax,%r12
+ 16a:	c6 40 1c 00          	movb   $0x0,0x1c(%rax)
+ 16e:	e8 00 00 00 00       	callq  173 <create_node+0x33>
+ 173:	49 89 44 24 08       	mov    %rax,0x8(%r12)
+ 178:	e8 00 00 00 00       	callq  17d <create_node+0x3d>
+ 17d:	49 89 44 24 10       	mov    %rax,0x10(%r12)
+ 182:	49 8b 44 24 08       	mov    0x8(%r12),%rax
+ 187:	4c 89 20             	mov    %r12,(%rax)
+ 18a:	49 8b 44 24 10       	mov    0x10(%r12),%rax
+ 18f:	4c 89 20             	mov    %r12,(%rax)
+ 192:	4c 89 e0             	mov    %r12,%rax
+ 195:	5b                   	pop    %rbx
+ 196:	41 c6 44 24 1d 00    	movb   $0x0,0x1d(%r12)
+ 19c:	49 c7 04 24 00 00 00 	movq   $0x0,(%r12)
+ 1a3:	00 
+ 1a4:	41 c6 44 24 1f 00    	movb   $0x0,0x1f(%r12)
+ 1aa:	41 c7 44 24 20 ff ff 	movl   $0xffffffff,0x20(%r12)
+ 1b1:	ff ff 
+ 1b3:	41 5c                	pop    %r12
+ 1b5:	5d                   	pop    %rbp
+ 1b6:	c3                   	retq   
+ 1b7:	66 0f 1f 84 00 00 00 	nopw   0x0(%rax,%rax,1)
+ 1be:	00 00 
+
+00000000000001c0 <replace_parent>:
+ 1c0:	e8 00 00 00 00       	callq  1c5 <replace_parent+0x5>
+ 1c5:	55                   	push   %rbp
+ 1c6:	48 89 e5             	mov    %rsp,%rbp
+ 1c9:	41 56                	push   %r14
+ 1cb:	41 55                	push   %r13
+ 1cd:	49 89 fd             	mov    %rdi,%r13
+ 1d0:	41 54                	push   %r12
+ 1d2:	53                   	push   %rbx
+ 1d3:	4c 8b 76 08          	mov    0x8(%rsi),%r14
+ 1d7:	48 89 f3             	mov    %rsi,%rbx
+ 1da:	4c 8b 66 10          	mov    0x10(%rsi),%r12
+ 1de:	41 80 7e 1d 00       	cmpb   $0x0,0x1d(%r14)
+ 1e3:	74 41                	je     226 <replace_parent+0x66>
+ 1e5:	4c 89 f7             	mov    %r14,%rdi
+ 1e8:	e8 00 00 00 00       	callq  1ed <replace_parent+0x2d>
+ 1ed:	48 8b 03             	mov    (%rbx),%rax
+ 1f0:	49 39 c5             	cmp    %rax,%r13
+ 1f3:	74 44                	je     239 <replace_parent+0x79>
+ 1f5:	80 78 1d 00          	cmpb   $0x0,0x1d(%rax)
+ 1f9:	0f 85 00 00 00 00    	jne    1ff <replace_parent+0x3f>
+ 1ff:	48 3b 58 08          	cmp    0x8(%rax),%rbx
+ 203:	49 89 04 24          	mov    %rax,(%r12)
+ 207:	74 41                	je     24a <replace_parent+0x8a>
+ 209:	4c 89 60 10          	mov    %r12,0x10(%rax)
+ 20d:	80 3d 00 00 00 00 00 	cmpb   $0x0,0x0(%rip)        # 214 <replace_parent+0x54>
+ 214:	0f 85 00 00 00 00    	jne    21a <replace_parent+0x5a>
+ 21a:	5b                   	pop    %rbx
+ 21b:	4c 89 e0             	mov    %r12,%rax
+ 21e:	41 5c                	pop    %r12
+ 220:	41 5d                	pop    %r13
+ 222:	41 5e                	pop    %r14
+ 224:	5d                   	pop    %rbp
+ 225:	c3                   	retq   
+ 226:	4c 89 e7             	mov    %r12,%rdi
+ 229:	4d 89 f4             	mov    %r14,%r12
+ 22c:	e8 00 00 00 00       	callq  231 <replace_parent+0x71>
+ 231:	48 8b 03             	mov    (%rbx),%rax
+ 234:	49 39 c5             	cmp    %rax,%r13
+ 237:	75 bc                	jne    1f5 <replace_parent+0x35>
+ 239:	4d 89 2c 24          	mov    %r13,(%r12)
+ 23d:	4d 89 65 08          	mov    %r12,0x8(%r13)
+ 241:	48 c7 03 00 00 00 00 	movq   $0x0,(%rbx)
+ 248:	eb c3                	jmp    20d <replace_parent+0x4d>
+ 24a:	4c 89 60 08          	mov    %r12,0x8(%rax)
+ 24e:	eb bd                	jmp    20d <replace_parent+0x4d>
+
+0000000000000250 <is_left>:
+ 250:	e8 00 00 00 00       	callq  255 <is_left+0x5>
+ 255:	55                   	push   %rbp
+ 256:	48 89 e5             	mov    %rsp,%rbp
+ 259:	53                   	push   %rbx
+ 25a:	48 8b 07             	mov    (%rdi),%rax
+ 25d:	48 89 fb             	mov    %rdi,%rbx
+ 260:	80 78 1d 00          	cmpb   $0x0,0x1d(%rax)
+ 264:	0f 85 00 00 00 00    	jne    26a <is_left+0x1a>
+ 26a:	48 39 58 08          	cmp    %rbx,0x8(%rax)
+ 26e:	5b                   	pop    %rbx
+ 26f:	0f 94 c0             	sete   %al
+ 272:	5d                   	pop    %rbp
+ 273:	c3                   	retq   
+ 274:	66 66 2e 0f 1f 84 00 	data16 nopw %cs:0x0(%rax,%rax,1)
+ 27b:	00 00 00 00 
+ 27f:	90                   	nop
+
+0000000000000280 <get_uncle>:
+ 280:	e8 00 00 00 00       	callq  285 <get_uncle+0x5>
+ 285:	55                   	push   %rbp
+ 286:	48 8b 07             	mov    (%rdi),%rax
+ 289:	80 78 1d 00          	cmpb   $0x0,0x1d(%rax)
+ 28d:	48 89 e5             	mov    %rsp,%rbp
+ 290:	0f 85 00 00 00 00    	jne    296 <get_uncle+0x16>
+ 296:	48 8b 10             	mov    (%rax),%rdx
+ 299:	80 7a 1d 00          	cmpb   $0x0,0x1d(%rdx)
+ 29d:	0f 85 00 00 00 00    	jne    2a3 <get_uncle+0x23>
+ 2a3:	4c 8b 42 08          	mov    0x8(%rdx),%r8
+ 2a7:	4c 39 c0             	cmp    %r8,%rax
+ 2aa:	74 05                	je     2b1 <get_uncle+0x31>
+ 2ac:	4c 89 c0             	mov    %r8,%rax
+ 2af:	5d                   	pop    %rbp
+ 2b0:	c3                   	retq   
+ 2b1:	4c 8b 42 10          	mov    0x10(%rdx),%r8
+ 2b5:	5d                   	pop    %rbp
+ 2b6:	4c 89 c0             	mov    %r8,%rax
+ 2b9:	c3                   	retq   
+ 2ba:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+
+00000000000002c0 <free_node>:
+ 2c0:	e8 00 00 00 00       	callq  2c5 <free_node+0x5>
+ 2c5:	55                   	push   %rbp
+ 2c6:	48 89 e5             	mov    %rsp,%rbp
+ 2c9:	e8 00 00 00 00       	callq  2ce <free_node+0xe>
+ 2ce:	5d                   	pop    %rbp
+ 2cf:	c3                   	retq   
+
+Disassembly of section .text.unlikely:
+
+0000000000000000 <show_tree.cold>:
+   0:	48 8b 05 00 00 00 00 	mov    0x0(%rip),%rax        # 7 <show_tree.cold+0x7>
+   7:	49 c7 c0 00 00 00 00 	mov    $0x0,%r8
+   e:	b9 45 00 00 00       	mov    $0x45,%ecx
+  13:	48 c7 c2 00 00 00 00 	mov    $0x0,%rdx
+  1a:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  21:	64 48 8b 30          	mov    %fs:(%rax),%rsi
+  25:	e8 00 00 00 00       	callq  2a <show_tree.cold+0x2a>
+  2a:	0f b6 53 1f          	movzbl 0x1f(%rbx),%edx
+  2e:	48 89 de             	mov    %rbx,%rsi
+  31:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  38:	e8 00 00 00 00       	callq  3d <show_tree.cold+0x3d>
+  3d:	4c 8b 63 08          	mov    0x8(%rbx),%r12
+  41:	41 80 7c 24 1d 00    	cmpb   $0x0,0x1d(%r12)
+  47:	74 39                	je     82 <show_tree.cold+0x82>
+  49:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  50:	e8 00 00 00 00       	callq  55 <show_tree.cold+0x55>
+  55:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  5c:	e8 00 00 00 00       	callq  61 <show_tree.cold+0x61>
+  61:	48 8b 45 e0          	mov    -0x20(%rbp),%rax
+  65:	65 48 33 04 25 28 00 	xor    %gs:0x28,%rax
+  6c:	00 00 
+  6e:	0f 85 17 01 00 00    	jne    18b <show_tree.cold+0x18b>
+  74:	48 81 c4 a0 01 00 00 	add    $0x1a0,%rsp
+  7b:	5b                   	pop    %rbx
+  7c:	41 5c                	pop    %r12
+  7e:	41 5d                	pop    %r13
+  80:	5d                   	pop    %rbp
+  81:	c3                   	retq   
+  82:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+  89:	e8 00 00 00 00       	callq  8e <show_tree.cold+0x8e>
+  8e:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+  95:	e8 00 00 00 00       	callq  9a <show_tree.cold+0x9a>
+  9a:	4c 89 e6             	mov    %r12,%rsi
+  9d:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+  a4:	e8 00 00 00 00       	callq  a9 <show_tree.cold+0xa9>
+  a9:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+  b0:	e8 00 00 00 00       	callq  b5 <show_tree.cold+0xb5>
+  b5:	85 c0                	test   %eax,%eax
+  b7:	0f 8e b1 00 00 00    	jle    16e <show_tree.cold+0x16e>
+  bd:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+  c4:	e8 00 00 00 00       	callq  c9 <show_tree.cold+0xc9>
+  c9:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+  d0:	8d 70 ff             	lea    -0x1(%rax),%esi
+  d3:	e8 00 00 00 00       	callq  d8 <show_tree.cold+0xd8>
+  d8:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+  df:	8b 48 20             	mov    0x20(%rax),%ecx
+  e2:	0f b6 50 1f          	movzbl 0x1f(%rax),%edx
+  e6:	48 89 c3             	mov    %rax,%rbx
+  e9:	48 89 c6             	mov    %rax,%rsi
+  ec:	4c 8b 68 08          	mov    0x8(%rax),%r13
+  f0:	4c 8b 60 10          	mov    0x10(%rax),%r12
+  f4:	e8 00 00 00 00       	callq  f9 <show_tree.cold+0xf9>
+  f9:	80 7b 1c 01          	cmpb   $0x1,0x1c(%rbx)
+  fd:	8b 73 18             	mov    0x18(%rbx),%esi
+ 100:	0f 84 8a 00 00 00    	je     190 <show_tree.cold+0x190>
+ 106:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 10d:	e8 00 00 00 00       	callq  112 <show_tree.cold+0x112>
+ 112:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 119:	e8 00 00 00 00       	callq  11e <show_tree.cold+0x11e>
+ 11e:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 125:	8d 70 ff             	lea    -0x1(%rax),%esi
+ 128:	e8 00 00 00 00       	callq  12d <show_tree.cold+0x12d>
+ 12d:	41 80 7d 1d 00       	cmpb   $0x0,0x1d(%r13)
+ 132:	74 6d                	je     1a1 <show_tree.cold+0x1a1>
+ 134:	41 0f b6 75 1f       	movzbl 0x1f(%r13),%esi
+ 139:	4c 89 ea             	mov    %r13,%rdx
+ 13c:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 143:	e8 00 00 00 00       	callq  148 <show_tree.cold+0x148>
+ 148:	41 80 7c 24 1d 00    	cmpb   $0x0,0x1d(%r12)
+ 14e:	0f 84 86 00 00 00    	je     1da <show_tree.cold+0x1da>
+ 154:	41 0f b6 74 24 1f    	movzbl 0x1f(%r12),%esi
+ 15a:	4c 89 e2             	mov    %r12,%rdx
+ 15d:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 164:	e8 00 00 00 00       	callq  169 <show_tree.cold+0x169>
+ 169:	e9 3b ff ff ff       	jmpq   a9 <show_tree.cold+0xa9>
+ 16e:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 175:	e8 00 00 00 00       	callq  17a <show_tree.cold+0x17a>
+ 17a:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 181:	e8 00 00 00 00       	callq  186 <show_tree.cold+0x186>
+ 186:	e9 d6 fe ff ff       	jmpq   61 <show_tree.cold+0x61>
+ 18b:	e8 00 00 00 00       	callq  190 <show_tree.cold+0x190>
+ 190:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 197:	e8 00 00 00 00       	callq  19c <show_tree.cold+0x19c>
+ 19c:	e9 71 ff ff ff       	jmpq   112 <show_tree.cold+0x112>
+ 1a1:	41 80 7d 1c 01       	cmpb   $0x1,0x1c(%r13)
+ 1a6:	41 8b 75 18          	mov    0x18(%r13),%esi
+ 1aa:	74 20                	je     1cc <show_tree.cold+0x1cc>
+ 1ac:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 1b3:	e8 00 00 00 00       	callq  1b8 <show_tree.cold+0x1b8>
+ 1b8:	4c 89 ee             	mov    %r13,%rsi
+ 1bb:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 1c2:	e8 00 00 00 00       	callq  1c7 <show_tree.cold+0x1c7>
+ 1c7:	e9 7c ff ff ff       	jmpq   148 <show_tree.cold+0x148>
+ 1cc:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 1d3:	e8 00 00 00 00       	callq  1d8 <show_tree.cold+0x1d8>
+ 1d8:	eb de                	jmp    1b8 <show_tree.cold+0x1b8>
+ 1da:	41 80 7c 24 1c 01    	cmpb   $0x1,0x1c(%r12)
+ 1e0:	41 8b 74 24 18       	mov    0x18(%r12),%esi
+ 1e5:	74 20                	je     207 <show_tree.cold+0x207>
+ 1e7:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 1ee:	e8 00 00 00 00       	callq  1f3 <show_tree.cold+0x1f3>
+ 1f3:	4c 89 e6             	mov    %r12,%rsi
+ 1f6:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 1fd:	e8 00 00 00 00       	callq  202 <show_tree.cold+0x202>
+ 202:	e9 a2 fe ff ff       	jmpq   a9 <show_tree.cold+0xa9>
+ 207:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 20e:	e8 00 00 00 00       	callq  213 <show_tree.cold+0x213>
+ 213:	eb de                	jmp    1f3 <show_tree.cold+0x1f3>
+
+0000000000000215 <show_tree_strict>:
+ 215:	e8 00 00 00 00       	callq  21a <show_tree_strict+0x5>
+ 21a:	55                   	push   %rbp
+ 21b:	48 89 e5             	mov    %rsp,%rbp
+ 21e:	41 55                	push   %r13
+ 220:	41 54                	push   %r12
+ 222:	53                   	push   %rbx
+ 223:	48 89 fb             	mov    %rdi,%rbx
+ 226:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 22d:	48 81 ec a0 01 00 00 	sub    $0x1a0,%rsp
+ 234:	65 48 8b 04 25 28 00 	mov    %gs:0x28,%rax
+ 23b:	00 00 
+ 23d:	48 89 45 e0          	mov    %rax,-0x20(%rbp)
+ 241:	31 c0                	xor    %eax,%eax
+ 243:	e8 00 00 00 00       	callq  248 <show_tree_strict+0x33>
+ 248:	0f b6 53 1f          	movzbl 0x1f(%rbx),%edx
+ 24c:	48 89 de             	mov    %rbx,%rsi
+ 24f:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 256:	e8 00 00 00 00       	callq  25b <show_tree_strict+0x46>
+ 25b:	4c 8b 63 08          	mov    0x8(%rbx),%r12
+ 25f:	41 80 7c 24 1d 00    	cmpb   $0x0,0x1d(%r12)
+ 265:	74 11                	je     278 <show_tree_strict+0x63>
+ 267:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 26e:	e8 00 00 00 00       	callq  273 <show_tree_strict+0x5e>
+ 273:	e9 bb 01 00 00       	jmpq   433 <show_tree_strict+0x21e>
+ 278:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 27f:	e8 00 00 00 00       	callq  284 <show_tree_strict+0x6f>
+ 284:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 28b:	e8 00 00 00 00       	callq  290 <show_tree_strict+0x7b>
+ 290:	4c 89 e6             	mov    %r12,%rsi
+ 293:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 29a:	e8 00 00 00 00       	callq  29f <show_tree_strict+0x8a>
+ 29f:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 2a6:	e8 00 00 00 00       	callq  2ab <show_tree_strict+0x96>
+ 2ab:	85 c0                	test   %eax,%eax
+ 2ad:	0f 8e 74 01 00 00    	jle    427 <show_tree_strict+0x212>
+ 2b3:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 2ba:	e8 00 00 00 00       	callq  2bf <show_tree_strict+0xaa>
+ 2bf:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 2c6:	8d 70 ff             	lea    -0x1(%rax),%esi
+ 2c9:	e8 00 00 00 00       	callq  2ce <show_tree_strict+0xb9>
+ 2ce:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 2d5:	8b 48 20             	mov    0x20(%rax),%ecx
+ 2d8:	0f b6 50 1f          	movzbl 0x1f(%rax),%edx
+ 2dc:	48 89 c3             	mov    %rax,%rbx
+ 2df:	48 89 c6             	mov    %rax,%rsi
+ 2e2:	4c 8b 68 08          	mov    0x8(%rax),%r13
+ 2e6:	4c 8b 60 10          	mov    0x10(%rax),%r12
+ 2ea:	e8 00 00 00 00       	callq  2ef <show_tree_strict+0xda>
+ 2ef:	80 7b 1f 00          	cmpb   $0x0,0x1f(%rbx)
+ 2f3:	74 0c                	je     301 <show_tree_strict+0xec>
+ 2f5:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 2fc:	e8 00 00 00 00       	callq  301 <show_tree_strict+0xec>
+ 301:	83 7b 20 ff          	cmpl   $0xffffffff,0x20(%rbx)
+ 305:	74 0c                	je     313 <show_tree_strict+0xfe>
+ 307:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 30e:	e8 00 00 00 00       	callq  313 <show_tree_strict+0xfe>
+ 313:	80 7b 1c 01          	cmpb   $0x1,0x1c(%rbx)
+ 317:	8b 73 18             	mov    0x18(%rbx),%esi
+ 31a:	75 0e                	jne    32a <show_tree_strict+0x115>
+ 31c:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 323:	e8 00 00 00 00       	callq  328 <show_tree_strict+0x113>
+ 328:	eb 0c                	jmp    336 <show_tree_strict+0x121>
+ 32a:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 331:	e8 00 00 00 00       	callq  336 <show_tree_strict+0x121>
+ 336:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 33d:	e8 00 00 00 00       	callq  342 <show_tree_strict+0x12d>
+ 342:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 349:	8d 70 ff             	lea    -0x1(%rax),%esi
+ 34c:	e8 00 00 00 00       	callq  351 <show_tree_strict+0x13c>
+ 351:	41 80 7d 1d 00       	cmpb   $0x0,0x1d(%r13)
+ 356:	74 28                	je     380 <show_tree_strict+0x16b>
+ 358:	41 0f b6 75 1f       	movzbl 0x1f(%r13),%esi
+ 35d:	4c 89 ea             	mov    %r13,%rdx
+ 360:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 367:	e8 00 00 00 00       	callq  36c <show_tree_strict+0x157>
+ 36c:	80 7b 1f 00          	cmpb   $0x0,0x1f(%rbx)
+ 370:	74 42                	je     3b4 <show_tree_strict+0x19f>
+ 372:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 379:	e8 00 00 00 00       	callq  37e <show_tree_strict+0x169>
+ 37e:	eb 34                	jmp    3b4 <show_tree_strict+0x19f>
+ 380:	41 80 7d 1c 01       	cmpb   $0x1,0x1c(%r13)
+ 385:	41 8b 75 18          	mov    0x18(%r13),%esi
+ 389:	75 0e                	jne    399 <show_tree_strict+0x184>
+ 38b:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 392:	e8 00 00 00 00       	callq  397 <show_tree_strict+0x182>
+ 397:	eb 0c                	jmp    3a5 <show_tree_strict+0x190>
+ 399:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 3a0:	e8 00 00 00 00       	callq  3a5 <show_tree_strict+0x190>
+ 3a5:	4c 89 ee             	mov    %r13,%rsi
+ 3a8:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 3af:	e8 00 00 00 00       	callq  3b4 <show_tree_strict+0x19f>
+ 3b4:	41 80 7c 24 1d 00    	cmpb   $0x0,0x1d(%r12)
+ 3ba:	74 30                	je     3ec <show_tree_strict+0x1d7>
+ 3bc:	41 0f b6 74 24 1f    	movzbl 0x1f(%r12),%esi
+ 3c2:	4c 89 e2             	mov    %r12,%rdx
+ 3c5:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 3cc:	e8 00 00 00 00       	callq  3d1 <show_tree_strict+0x1bc>
+ 3d1:	80 7b 1f 00          	cmpb   $0x0,0x1f(%rbx)
+ 3d5:	0f 84 c4 fe ff ff    	je     29f <show_tree_strict+0x8a>
+ 3db:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 3e2:	e8 00 00 00 00       	callq  3e7 <show_tree_strict+0x1d2>
+ 3e7:	e9 b3 fe ff ff       	jmpq   29f <show_tree_strict+0x8a>
+ 3ec:	41 80 7c 24 1c 01    	cmpb   $0x1,0x1c(%r12)
+ 3f2:	41 8b 74 24 18       	mov    0x18(%r12),%esi
+ 3f7:	75 0e                	jne    407 <show_tree_strict+0x1f2>
+ 3f9:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 400:	e8 00 00 00 00       	callq  405 <show_tree_strict+0x1f0>
+ 405:	eb 0c                	jmp    413 <show_tree_strict+0x1fe>
+ 407:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 40e:	e8 00 00 00 00       	callq  413 <show_tree_strict+0x1fe>
+ 413:	4c 89 e6             	mov    %r12,%rsi
+ 416:	48 8d bd 48 fe ff ff 	lea    -0x1b8(%rbp),%rdi
+ 41d:	e8 00 00 00 00       	callq  422 <show_tree_strict+0x20d>
+ 422:	e9 78 fe ff ff       	jmpq   29f <show_tree_strict+0x8a>
+ 427:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 42e:	e8 00 00 00 00       	callq  433 <show_tree_strict+0x21e>
+ 433:	48 8b 45 e0          	mov    -0x20(%rbp),%rax
+ 437:	65 48 33 04 25 28 00 	xor    %gs:0x28,%rax
+ 43e:	00 00 
+ 440:	74 05                	je     447 <show_tree_strict+0x232>
+ 442:	e8 00 00 00 00       	callq  447 <show_tree_strict+0x232>
+ 447:	48 81 c4 a0 01 00 00 	add    $0x1a0,%rsp
+ 44e:	5b                   	pop    %rbx
+ 44f:	41 5c                	pop    %r12
+ 451:	41 5d                	pop    %r13
+ 453:	5d                   	pop    %rbp
+ 454:	c3                   	retq   
+
+0000000000000455 <replace_parent.cold>:
+ 455:	48 8b 05 00 00 00 00 	mov    0x0(%rip),%rax        # 45c <replace_parent.cold+0x7>
+ 45c:	49 c7 c0 00 00 00 00 	mov    $0x0,%r8
+ 463:	b9 f0 01 00 00       	mov    $0x1f0,%ecx
+ 468:	48 c7 c2 00 00 00 00 	mov    $0x0,%rdx
+ 46f:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 476:	64 48 8b 30          	mov    %fs:(%rax),%rsi
+ 47a:	e8 00 00 00 00       	callq  47f <replace_parent.cold+0x2a>
+ 47f:	e9 00 00 00 00       	jmpq   484 <replace_parent.cold+0x2f>
+ 484:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 48b:	e8 00 00 00 00       	callq  490 <replace_parent.cold+0x3b>
+ 490:	48 8b 03             	mov    (%rbx),%rax
+ 493:	e9 00 00 00 00       	jmpq   498 <is_left.cold>
+
+0000000000000498 <is_left.cold>:
+ 498:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 49f:	e8 00 00 00 00       	callq  4a4 <is_left.cold+0xc>
+ 4a4:	48 8b 03             	mov    (%rbx),%rax
+ 4a7:	e9 00 00 00 00       	jmpq   4ac <get_uncle.cold>
+
+00000000000004ac <get_uncle.cold>:
+ 4ac:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+ 4b3:	e8 00 00 00 00       	callq  4b8 <get_uncle.cold+0xc>
+ 4b8:	45 31 c0             	xor    %r8d,%r8d
+ 4bb:	e9 00 00 00 00       	jmpq   4c0 <get_uncle.cold+0x14>

@@ -43,7 +43,6 @@ tree_node *rb_init(void)
     dummy5->left_child = root;
     free_node(root->right_child);
     root->right_child = dummy_sibling;
-
     return root;
 }
 
@@ -229,15 +228,10 @@ void rb_insert(tree_node *root, int value, long thread_index)
     tree_node *curr_node;
     tree_node *parent, *uncle, *grandparent;
     vector local_area;
-
-    // vector nodes_own_flag;
-
     int i;
 
-    vector_init(&local_area);
-
     // init thread local nodes with flag
-    clear_local_area(&local_area); //nodes_own_flag
+    clear_local_area(thread_index);
 
     new_node = (tree_node *)kmalloc(sizeof(tree_node), GFP_KERNEL);
     new_node->color = RED;
@@ -257,7 +251,7 @@ void rb_insert(tree_node *root, int value, long thread_index)
     grandparent = NULL;
 
     parent = curr_node->parent;
-    vector_init(&local_area); //local_area
+    vector_init(&local_area);
     vector_add(&local_area, curr_node);
     vector_add(&local_area, parent);
 
@@ -371,13 +365,9 @@ void rb_remove(tree_node *root, int value, long thread_index)
     tree_node *y; // actual delete node
     tree_node *replace_node;
 
-    vector nodes_own_flag;
-
-    vector_init(&nodes_own_flag);
-
     dbg_printf("[Remove] thread %ld value %d\n", thread_index, value);
     // init thread local nodes with flag
-    clear_local_area(&nodes_own_flag);
+    clear_local_area(thread_index);
 restart:
 
     z = par_find(root, value);
@@ -397,7 +387,7 @@ restart:
     // we now hold the flag of y(delete_node) AND of z(node)
 
     // set up for local area delete, also four markers above
-    if (!setup_local_area_for_delete(y, z, &nodes_own_flag, thread_index)) {
+    if (!setup_local_area_for_delete(y, z, thread_index)) {
         // release flags
         y->flag = false;
         if (y != z) z->flag = false;
@@ -413,19 +403,19 @@ restart:
         z->value = y->value;
     
     // release z's flag safely
-    if (!is_in_local_area(z, &nodes_own_flag)) {
+    if (!is_in_local_area(z, thread_index)) {
         z->flag = false;
         dbg_printf("[Flag] release %d\n", z->value);
     }
 
     if (y->color == BLACK) /* fixup case */
-        replace_node = rb_remove_fixup(root, replace_node, z, &nodes_own_flag, thread_index);
+        replace_node = rb_remove_fixup(root, replace_node, z, thread_index);
     
     // clear markers above
     while (!release_markers_above(replace_node->parent, z, thread_index))
         ;
 
-    clear_local_area(&nodes_own_flag);
+    clear_local_area(thread_index);
     
     dbg_printf("[Remove] node with value %d complete.\n", value);
     free_node(y);
@@ -438,7 +428,7 @@ restart:
  */
 tree_node *rb_remove_fixup(tree_node *root, 
                            tree_node *node,
-                           tree_node *z, vector *nodes_own_flag, long thread_index)
+                           tree_node *z, long thread_index)
 {
     while (!is_root(root, node) && node->color == BLACK) {
         tree_node *brother_node;
@@ -450,14 +440,14 @@ tree_node *rb_remove_fixup(tree_node *root,
                 left_rotate(root, node->parent);
                 brother_node = node->parent->right_child; // must be black
 
-                fix_up_case1(node, brother_node, nodes_own_flag, thread_index);
+                fix_up_case1(node, brother_node, thread_index);
                 dbg_printf("[Remove] case1 done.\n");
             } // case 1 will definitely turn into case 2
 
             if (brother_node->left_child->color == BLACK &&
                 brother_node->right_child->color == BLACK) { // case 2
                 brother_node->color = RED;
-                node = move_deleter_up(node, nodes_own_flag, thread_index);
+                node = move_deleter_up(node, thread_index);
                 dbg_printf("[Remove] case2 done.\n");
             }
 
@@ -467,7 +457,7 @@ tree_node *rb_remove_fixup(tree_node *root,
                 right_rotate(root, brother_node);
                 brother_node = node->parent->right_child;
 
-                fix_up_case3(node, brother_node, nodes_own_flag);
+                fix_up_case3(node, brother_node, thread_index);
                 dbg_printf("[Remove] case3 done.\n");
             }
 
@@ -490,14 +480,14 @@ tree_node *rb_remove_fixup(tree_node *root,
                 right_rotate(root, node->parent);
                 brother_node = node->parent->left_child;
 
-                fix_up_case1_r(node, brother_node, nodes_own_flag, thread_index);
+                fix_up_case1_r(node, brother_node, thread_index);
                 dbg_printf("[Remove] case1 done.\n");
             }
 
             if (brother_node->left_child->color == BLACK &&
                      brother_node->right_child->color == BLACK) {
                 brother_node->color = RED;
-                node = move_deleter_up(node, nodes_own_flag, thread_index);
+                node = move_deleter_up(node, thread_index);
                 dbg_printf("[Remove] case2 done.\n");
             }
 
@@ -507,7 +497,7 @@ tree_node *rb_remove_fixup(tree_node *root,
                 left_rotate(root, brother_node);
                 brother_node = node->parent->left_child;
 
-                fix_up_case3_r(node, brother_node, nodes_own_flag);
+                fix_up_case3_r(node, brother_node, thread_index);
                 dbg_printf("[Remove] case3 done.\n");
             }
 
