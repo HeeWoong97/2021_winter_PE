@@ -7,4 +7,4 @@ PWD			:= $(shell pwd)
 default:
 	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) modules
 clean:
-	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) clean
+	rm h.* *.o

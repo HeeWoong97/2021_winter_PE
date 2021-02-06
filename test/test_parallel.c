@@ -12,7 +12,7 @@
 #include <linux/ktime.h>
 #include <linux/sched.h>
 
-#define NUM_OF_DATA     100
+#define NUM_OF_DATA     16000
 
 vector THREADS_NUM_LIST;
 vector test_time_list;
@@ -21,7 +21,7 @@ bool remove_dbg = false;
 
 int total_size = 0; 
 int size_per_thread = 0;
-int numbers[100];
+int numbers[NUM_OF_DATA];
 tree_node *root;
 int sleep_time = 0;
 
@@ -56,24 +56,21 @@ int run_insert(void *arg)
     int count;
     int element;
     int i;
-    long *data = arg;
+    long data = *(long *)arg;
 
-    p = numbers + (*data) * size_per_thread;
-    printk("data: %ld\n", *data);
+    p = numbers + data * size_per_thread;
     start = p;
-    printk("start position: %d, size_per_thread: %d (PID: %d)\n", *p, size_per_thread, current->pid);
+    printk("*data(thread_index): %ld (PID: %d)\n", data, current->pid);
     count = size_per_thread;
-
-    printk("start run_insert (PID: %d)\n", current->pid);
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        printk("inserting element: %d (PID: %d)\n", element, current->pid);
-        rb_insert(root, element, *data);
+        // printk("inserting element: %d (PID: %d)\n", element, current->pid);
+        rb_insert(root, element, data);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
-    // finish++;
     __sync_fetch_and_add(&finish, 1);
+    // printk("\n");
 
     return 0;
 }
@@ -85,31 +82,28 @@ int run_multi_thread_insert(int thread_count)
     struct task_struct *thread[16];
     long arg[16];
     
-    printk("Enter run multi thread insert (PID: %d)", current->pid);
+    // printk("Enter run multi thread insert (PID: %d)", current->pid);
 
     size_per_thread = total_size / thread_count;
 
     start = ktime_get_ns();
-    printk("ktime_get_ns finished\n");
 
     thread_count--;
-    printk("thread count-- finished (thread_count: %d)\n", thread_count);
     for (i = 0; i < thread_count; i++) {
-        printk("for loop i: %d\n", i);
-        arg[i + 1] = i + 1;
-        printk("arg: %ld\n", arg[i + 1]);
+        arg[i + 1] = i;
+        // printk("arg: %ld (i: %d)\n", arg[i + 1], i);
         thread[i] = kthread_run(&run_insert, &arg[i + 1], "insert");
     }
 
-    printk("starting run_insert(0) (PID: %d)\n", current->pid);
-    arg[0] = 0;
+    // printk("starting run_insert(0) (PID: %d)\n", current->pid);
+    arg[0] = thread_count;
     run_insert(&arg[0]);    
 
     while (finish != thread_count + 1) {
         msleep(1);
     }
     finish = 0;
-    printk("finish sleep\n");
+    // printk("finish sleep (PID: %d)\n", current->pid);
 
     end = ktime_get_ns();
     for (i = 0; i < thread_count; i++) {
@@ -117,7 +111,8 @@ int run_multi_thread_insert(int thread_count)
     }
 
     printk("time taken by insert with %d thread: %lld nsec\n", thread_count + 1, end - start);
-    
+    // printk("\n");
+
     return 0;
 }
 
@@ -128,20 +123,20 @@ int run_remove(void *arg)
     int count;
     int element;
     int i;
-    long *data = arg;
+    long data = *(long *)arg;
 
-    p = numbers + (*data) * size_per_thread;
+    p = numbers + data * size_per_thread;
     start = p;
     count = size_per_thread;
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        printk("removing element: %d (PID: %d)\n", element, current->pid);
-        rb_remove(root, element, *data);
+        // printk("removing element: %d (PID: %d)\n", element, current->pid);
+        rb_remove(root, element, data);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
-    // finish++;
     __sync_fetch_and_add(&finish, 1);
+    // printk("\n");
 
     return 0;
 }
@@ -159,11 +154,11 @@ int run_multi_thread_remove(int thread_count)
 
     thread_count--;
     for (i = 0; i < thread_count; i++) {
-        arg[i + 1] = i + 1;
+        arg[i + 1] = i;
         thread[i] = kthread_run(&run_remove, &arg[i + 1], "remove");
     }
 
-    arg[0] = 0;
+    arg[0] = thread_count;
     run_remove(&arg[0]);
 
     while (finish != thread_count + 1) {
@@ -176,8 +171,9 @@ int run_multi_thread_remove(int thread_count)
         kthread_stop(thread[i]);
     }
 
-    printk("time taken by insert with %d thread: %lld nsec\n", thread_count + 1, end - start);
-    
+    printk("time taken by remove with %d thread: %lld nsec\n", thread_count + 1, end - start);
+    // printk("\n");
+
     return 0;
 }
 
@@ -191,7 +187,7 @@ void rbtree_test(void)
 
     generate_data();
     printk("total_size: %d\n", total_size);
-    // for (i = 0; i < 2; i++) {
+    // for (i = 0; i < 3; i++) {
         // thread_num = threads_num[i];
         thread_num = 4;
         num_processes_r = num_processes_i = thread_num;
@@ -199,7 +195,7 @@ void rbtree_test(void)
         root = rb_init();
 
         run_multi_thread_insert(num_processes_i);
-        run_multi_thread_remove(num_processes_r);
+        // run_multi_thread_remove(num_processes_r);
     // }
 
     printk("\n");

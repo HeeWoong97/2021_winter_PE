@@ -282,6 +282,7 @@ bool setup_local_area_for_delete(tree_node *y, tree_node *z, vector *nodes_own_f
 
     // local area setup
     vector_init(nodes_own_flag);
+    vector_clear(nodes_own_flag);
     vector_add(nodes_own_flag, x);
     vector_add(nodes_own_flag, w);
     vector_add(nodes_own_flag, yp);
@@ -845,6 +846,7 @@ tree_node *move_inserter_up(tree_node *oldx, vector *local_area)
         break;
     }
 
+    vector_clear(local_area);
     vector_add(local_area, newx);
     vector_add(local_area, newp);
     vector_add(local_area, newgp);
