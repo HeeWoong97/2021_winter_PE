@@ -12,7 +12,7 @@
 #include <linux/ktime.h>
 #include <linux/sched.h>
 
-#define NUM_OF_DATA     16000
+#define NUM_OF_DATA     40000
 
 vector THREADS_NUM_LIST;
 vector test_time_list;
@@ -189,7 +189,7 @@ void rbtree_test(void)
     printk("total_size: %d\n", total_size);
     // for (i = 0; i < 3; i++) {
         // thread_num = threads_num[i];
-        thread_num = 16;
+        thread_num = 8;
         num_processes_r = num_processes_i = thread_num;
 
         root = rb_init();

@@ -14,7 +14,7 @@
  ******************/
 
 /* thread-local variables */
-vector nodes_own_flag[16];
+vector nodes_own_flag[16] {};
 // long thread_index;
 
 // /**
