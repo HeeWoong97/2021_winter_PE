@@ -13,18 +13,7 @@
  * helper function
  ******************/
 
-/* thread-local variables */
-vector nodes_own_flag[16] {};
-// long thread_index;
-
-// /**
-//  * cannot find a 'extern' way to use thread_local variables
-//  * across files
-//  */
-// void thread_index_init(long i)
-// {
-//     thread_index[i] = i;
-// }
+vector nodes_own_flag[16];
 
 /**
  * clear local area
@@ -37,14 +26,11 @@ void clear_local_area(long thread_index)
     dbg_printf("[Flag] Clear\n");
     for (i = 0; i < vector_total(&nodes_own_flag[thread_index]); i++) {
         tree_node *node = vector_get(&nodes_own_flag[thread_index], i);
-        // if (node != NULL) {
-            node->flag = false;
-            dbg_printf("[Flag]      %d, 0x%lx, %d\n",
-                    node->value, (unsigned long)node, (int)node->flag);
-        // }
+        node->flag = false;
+        dbg_printf("[Flag]      %d, 0x%lx, %d\n",
+                node->value, (unsigned long)node, (int)node->flag);
     }
     vector_clear(&nodes_own_flag[thread_index]);
-    // vector_free(&nodes_own_flag);
 }
 
 /**
@@ -56,9 +42,7 @@ bool is_in_local_area(tree_node *target_node, long thread_index)
 
     for (i = 0; i < vector_total(&nodes_own_flag[thread_index]); i++) {
         tree_node *node = vector_get(&nodes_own_flag[thread_index], i);
-        // if (node != NULL) {
-            if (node == target_node) return true;        
-        // }
+        if (node == target_node) return true;        
     }
     
     return false;
@@ -282,12 +266,12 @@ bool setup_local_area_for_delete(tree_node *y, tree_node *z, long thread_index)
 
     // local area setup
     vector_init(&nodes_own_flag[thread_index]);
-    vector_add(&nodes_own_flag[thread_index], x);
-    vector_add(&nodes_own_flag[thread_index], w);
-    vector_add(&nodes_own_flag[thread_index], yp);
+    vector_add(&nodes_own_flag[thread_index], &x);
+    vector_add(&nodes_own_flag[thread_index], &w);
+    vector_add(&nodes_own_flag[thread_index], &yp);
     if (!w->is_leaf) {
-        vector_add(&nodes_own_flag[thread_index], wlc);
-        vector_add(&nodes_own_flag[thread_index], wrc);
+        vector_add(&nodes_own_flag[thread_index], &wlc);
+        vector_add(&nodes_own_flag[thread_index], &wrc);
         dbg_printf("[Flag] local area: %d %d %d %d %d\n",
                    x->value, w->value, yp->value, wlc->value, wrc->value);
     }
@@ -557,11 +541,11 @@ restart:
 
     // new local area
     vector_clear(&nodes_own_flag[thread_index]);
-    vector_add(&nodes_own_flag[thread_index], newx);
-    vector_add(&nodes_own_flag[thread_index], neww);
-    vector_add(&nodes_own_flag[thread_index], newp);
-    vector_add(&nodes_own_flag[thread_index], newwlc);
-    vector_add(&nodes_own_flag[thread_index], newwrc);
+    vector_add(&nodes_own_flag[thread_index], &newx);
+    vector_add(&nodes_own_flag[thread_index], &neww);
+    vector_add(&nodes_own_flag[thread_index], &newp);
+    vector_add(&nodes_own_flag[thread_index], &newwlc);
+    vector_add(&nodes_own_flag[thread_index], &newwrc);
     dbg_printf("[Flag] get new local area: %d %d %d %d %d\n",
                newx->value, neww->value, newp->value, 
                newwlc->value, newwrc->value);
@@ -606,11 +590,11 @@ void fix_up_case1(tree_node *x, tree_node *w, long thread_index)
 
     // new local area
     vector_clear(&nodes_own_flag[thread_index]);
-    vector_add(&nodes_own_flag[thread_index], x);
-    vector_add(&nodes_own_flag[thread_index], x->parent);
-    vector_add(&nodes_own_flag[thread_index], w);
-    vector_add(&nodes_own_flag[thread_index], w->left_child);
-    vector_add(&nodes_own_flag[thread_index], w->right_child);
+    vector_add(&nodes_own_flag[thread_index], &x);
+    vector_add(&nodes_own_flag[thread_index], &x->parent);
+    vector_add(&nodes_own_flag[thread_index], &w);
+    vector_add(&nodes_own_flag[thread_index], &w->left_child);
+    vector_add(&nodes_own_flag[thread_index], &w->right_child);
 }
 
 /**
@@ -648,11 +632,11 @@ void fix_up_case3(tree_node *x, tree_node *w, long thread_index)
 
     // new local area
     vector_clear(&nodes_own_flag[thread_index]);
-    vector_add(&nodes_own_flag[thread_index], x);
-    vector_add(&nodes_own_flag[thread_index], x->parent);
-    vector_add(&nodes_own_flag[thread_index], w);
-    vector_add(&nodes_own_flag[thread_index], w->left_child);
-    vector_add(&nodes_own_flag[thread_index], oldw);
+    vector_add(&nodes_own_flag[thread_index], &x);
+    vector_add(&nodes_own_flag[thread_index], &x->parent);
+    vector_add(&nodes_own_flag[thread_index], &w);
+    vector_add(&nodes_own_flag[thread_index], &w->left_child);
+    vector_add(&nodes_own_flag[thread_index], &oldw);
 }
 
 /**
@@ -691,11 +675,11 @@ void fix_up_case1_r(tree_node *x, tree_node *w, long thread_index)
                w->left_child->value, w->right_child->value);
     // new local area
     vector_clear(&nodes_own_flag[thread_index]);
-    vector_add(&nodes_own_flag[thread_index], x);
-    vector_add(&nodes_own_flag[thread_index], x->parent);
-    vector_add(&nodes_own_flag[thread_index], w);
-    vector_add(&nodes_own_flag[thread_index], w->left_child);
-    vector_add(&nodes_own_flag[thread_index], w->right_child);
+    vector_add(&nodes_own_flag[thread_index], &x);
+    vector_add(&nodes_own_flag[thread_index], &x->parent);
+    vector_add(&nodes_own_flag[thread_index], &w);
+    vector_add(&nodes_own_flag[thread_index], &w->left_child);
+    vector_add(&nodes_own_flag[thread_index], &w->right_child);
 }
 
 /**
@@ -728,11 +712,11 @@ void fix_up_case3_r(tree_node *x, tree_node *w, long thread_index)
                oldwlc->value, w->right_child->value);
     // new local area
     vector_clear(&nodes_own_flag[thread_index]);
-    vector_add(&nodes_own_flag[thread_index], x);
-    vector_add(&nodes_own_flag[thread_index], x->parent);
-    vector_add(&nodes_own_flag[thread_index], w);
-    vector_add(&nodes_own_flag[thread_index], oldw);
-    vector_add(&nodes_own_flag[thread_index], w->right_child);
+    vector_add(&nodes_own_flag[thread_index], &x);
+    vector_add(&nodes_own_flag[thread_index], &x->parent);
+    vector_add(&nodes_own_flag[thread_index], &w);
+    vector_add(&nodes_own_flag[thread_index], &oldw);
+    vector_add(&nodes_own_flag[thread_index], &w->right_child);
 }
 
 /************************ insert ************************/
@@ -845,10 +829,10 @@ tree_node *move_inserter_up(tree_node *oldx, vector *local_area)
         break;
     }
 
-    vector_add(local_area, newx);
-    vector_add(local_area, newp);
-    vector_add(local_area, newgp);
-    vector_add(local_area, newuncle);
+    vector_add(local_area, &newx);
+    vector_add(local_area, &newp);
+    vector_add(local_area, &newgp);
+    vector_add(local_area, &newuncle);
 
     return newx;
 }

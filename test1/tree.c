@@ -252,8 +252,8 @@ void rb_insert(tree_node *root, int value, long thread_index)
 
     parent = curr_node->parent;
     vector_init(&local_area);
-    vector_add(&local_area, curr_node);
-    vector_add(&local_area, parent);
+    vector_add(&local_area, &curr_node);
+    vector_add(&local_area, &parent);
 
     if (parent != NULL) {
         grandparent = parent->parent; 
@@ -268,8 +268,8 @@ void rb_insert(tree_node *root, int value, long thread_index)
         }
     }
 
-    vector_add(&local_area, uncle);
-    vector_add(&local_area, grandparent);
+    vector_add(&local_area, &uncle);
+    vector_add(&local_area, &grandparent);
 
     if (is_root(root, curr_node)) {
         curr_node->color = BLACK;

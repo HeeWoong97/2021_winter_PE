@@ -78,7 +78,7 @@ void show_tree(tree_node *root)
     
     vector_init(&frontier);
     vector_clear(&frontier);
-    vector_add(&frontier, root_node);
+    vector_add(&frontier, &root_node);
 
     while (vector_total(&frontier) > 0) {
         tree_node *cur_node = vector_get(&frontier, vector_total(&frontier) - 1);
@@ -101,7 +101,7 @@ void show_tree(tree_node *root)
                 printk("    (%d) Black\n", left_child->value);
             else
                 printk("    (%d) Red\n", left_child->value);
-            vector_add(&frontier, left_child);
+            vector_add(&frontier, &left_child);
         }
 
         if (right_child->is_leaf) {
@@ -112,7 +112,7 @@ void show_tree(tree_node *root)
                 printk("    (%d) Black\n", right_child->value);
             else
                 printk("    (%d) Red\n", right_child->value);
-            vector_add(&frontier, right_child);
+            vector_add(&frontier, &right_child);
         }
     }
     printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
@@ -140,7 +140,7 @@ void show_tree_strict(tree_node *root)
 
     vector_init(&frontier);
     vector_clear(&frontier);
-    vector_add(&frontier, root_node);
+    vector_add(&frontier, &root_node);
 
     while (vector_total(&frontier) > 0) {
         tree_node *cur_node = vector_get(&frontier, vector_total(&frontier) - 1);
@@ -169,7 +169,7 @@ void show_tree_strict(tree_node *root)
                 printk("    (%d) Black\n", left_child->value);
             else
                 printk("    (%d) Red\n", left_child->value);
-            vector_add(&frontier, left_child);
+            vector_add(&frontier, &left_child);
         }
 
         if (right_child->is_leaf) {
@@ -182,7 +182,7 @@ void show_tree_strict(tree_node *root)
                 printk("    (%d) Black\n", right_child->value);
             else
                 printk("    (%d) Red\n", right_child->value);
-            vector_add(&frontier, right_child);
+            vector_add(&frontier, &right_child);
         }
     }
     printk("\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");

@@ -12,7 +12,7 @@
 #include <linux/ktime.h>
 #include <linux/sched.h>
 
-#define NUM_OF_DATA     40000
+#define NUM_OF_DATA     100
 
 vector THREADS_NUM_LIST;
 vector test_time_list;
@@ -155,7 +155,7 @@ int run_multi_thread_remove(int thread_count)
     thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i + 1] = i;
-        thread[i] = kthread_run(&run_remove, &arg[i + 1], "remove");
+        thread[i] = kthread_run(&run_remove, &arg[i], "remove");
     }
 
     arg[0] = thread_count;
@@ -189,7 +189,7 @@ void rbtree_test(void)
     printk("total_size: %d\n", total_size);
     // for (i = 0; i < 3; i++) {
         // thread_num = threads_num[i];
-        thread_num = 8;
+        thread_num = 4;
         num_processes_r = num_processes_i = thread_num;
 
         root = rb_init();
