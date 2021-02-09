@@ -12,7 +12,7 @@
 #include <linux/ktime.h>
 #include <linux/sched.h>
 
-#define NUM_OF_DATA     100
+#define NUM_OF_DATA     100000
 
 vector THREADS_NUM_LIST;
 vector test_time_list;
@@ -70,6 +70,7 @@ int run_insert(void *arg)
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
     __sync_fetch_and_add(&finish, 1);
+	printk("finish: %d (PID: %d)", finish, current->pid);
     // printk("\n");
 
     return 0;
@@ -90,14 +91,14 @@ int run_multi_thread_insert(int thread_count)
 
     thread_count--;
     for (i = 0; i < thread_count; i++) {
-        arg[i + 1] = i;
+        arg[i] = i;
         // printk("arg: %ld (i: %d)\n", arg[i + 1], i);
-        thread[i] = kthread_run(&run_insert, &arg[i + 1], "insert");
+        thread[i] = kthread_run(&run_insert, &arg[i], "insert");
     }
 
     // printk("starting run_insert(0) (PID: %d)\n", current->pid);
-    arg[0] = thread_count;
-    run_insert(&arg[0]);    
+    arg[thread_count] = thread_count;
+    run_insert(&arg[thread_count]);    
 
     while (finish != thread_count + 1) {
         msleep(1);
@@ -195,7 +196,7 @@ void rbtree_test(void)
         root = rb_init();
 
         run_multi_thread_insert(num_processes_i);
-        // run_multi_thread_remove(num_processes_r);
+        run_multi_thread_remove(num_processes_r);
     // }
 
     printk("\n");
