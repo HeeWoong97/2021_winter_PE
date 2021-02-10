@@ -14,9 +14,6 @@
 
 #define NUM_OF_DATA     100000
 
-vector THREADS_NUM_LIST;
-vector test_time_list;
-
 bool remove_dbg = false;
 
 int total_size = 0; 
@@ -69,8 +66,10 @@ int run_insert(void *arg)
         rb_insert(root, element, data);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
+	printk("before finish: %d (PID: %d)", finish, current->pid);
     __sync_fetch_and_add(&finish, 1);
-	// printk("finish: %d (PID: %d)", finish, current->pid);
+	// finish++;
+	printk("after finish: %d (PID: %d)", finish, current->pid);
     // printk("\n");
 
     return 0;
@@ -89,6 +88,7 @@ int run_multi_thread_insert(int thread_count)
 
     start = ktime_get_ns();
 
+	// finish = -4;
     thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i] = i;
@@ -100,14 +100,18 @@ int run_multi_thread_insert(int thread_count)
     arg[thread_count] = thread_count;
     run_insert(&arg[thread_count]);    
 
-    while (finish != thread_count + 1) {
-        msleep(1);
+    // while (__sync_fetch_and_add(&finish, 0)) {
+    while (finish != thread_count + 1) {   
+		msleep(1);
     }
-    finish = 0;
+    // finish = -4;
+	finish = 0;
     // printk("finish sleep (PID: %d)\n", current->pid);
 
     end = ktime_get_ns();
-    for (i = 0; i < thread_count; i++) {
+
+	msleep(1);
+	for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
 
@@ -153,6 +157,7 @@ int run_multi_thread_remove(int thread_count)
 
     start = ktime_get_ns();
 
+	// finish = -4;
     thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i] = i;
@@ -162,12 +167,16 @@ int run_multi_thread_remove(int thread_count)
     arg[thread_count] = thread_count;
     run_remove(&arg[thread_count]);
 
-    while (finish != thread_count + 1) {
-        msleep(1);
+    // while (__sync_fetch_and_add(&finish, 0)) {
+	while (finish != thread_count + 1) { 
+		msleep(1);
     }
-    finish = 0;
+    // finish = -4;
+	finish = 0;
 
     end = ktime_get_ns();
+
+	msleep(1);
     for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
@@ -188,7 +197,7 @@ void rbtree_test(void)
 
     generate_data();
     printk("total_size: %d\n", total_size);
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 4; i++) {
         thread_num = threads_num[i];
         // thread_num = 4;
         num_processes_r = num_processes_i = thread_num;
@@ -196,7 +205,7 @@ void rbtree_test(void)
         root = rb_init();
 
         run_multi_thread_insert(num_processes_i);
-        run_multi_thread_remove(num_processes_r);
+        // run_multi_thread_remove(num_processes_r);
     }
 
     printk("\n");
