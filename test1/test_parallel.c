@@ -22,6 +22,7 @@ int numbers[NUM_OF_DATA];
 tree_node *root;
 int sleep_time = 0;
 
+bool shuffle = true;
 int finish;
 
 extern struct mutex show_tree_lock;
@@ -29,21 +30,24 @@ extern struct mutex show_tree_lock;
 void generate_data(void)
 {
     int i;
-    // int j;
-    // int random;
-    // int tmp;
+    int j;
+    unsigned int random;
+    int tmp;
     
     for (i = 0; i < NUM_OF_DATA; i++) {
         numbers[i] = i + 1;
         total_size++;
     }
-    // for (i = 0; i < NUM_OF_DATA - 1; i++) {
-    //     get_random_bytes(&random, sizeof(int));
-    //     j = i + random / (NUM_OF_DATA / (NUM_OF_DATA - i) + 1);
-    //     tmp = numbers[j];
-    //     numbers[j] = numbers[i];
-    //     numbers[i] = tmp;
-    // }
+	if (shuffle) {
+		for (i = 0; i < NUM_OF_DATA - 1; i++) {
+			get_random_bytes(&random, sizeof(int));
+			j = random % NUM_OF_DATA;
+			// printk("j: %d", j);
+			tmp = numbers[j];
+			numbers[j] = numbers[i];
+			numbers[i] = tmp;
+		}
+	}
 }
 
 int run_insert(void *arg)
@@ -62,6 +66,7 @@ int run_insert(void *arg)
 
     for (i = 0; i < count; i++) {
         element = start[i];
+		// printk("insert %d (PID: %d)", element, current->pid);
         // printk("inserting element: %d (PID: %d)\n", element, current->pid);
         rb_insert(root, element, data);
         dbg_printf("[RUN] finish inserting element %d\n", element);
@@ -124,7 +129,7 @@ int run_multi_thread_insert(int thread_count)
         kthread_stop(thread[i]);
     }
 
-    printk("time taken by insert with %d thread: %lld nsec\n", thread_count + 1, end - start);
+    printk("time taken by insert with %d thread: %lld nsec\n", thread_count, end - start);
     // printk("\n");
 
     return 0;
@@ -199,7 +204,7 @@ int run_multi_thread_remove(int thread_count)
         kthread_stop(thread[i]);
     }
 
-    printk("time taken by remove with %d thread: %lld nsec\n", thread_count + 1, end - start);
+    printk("time taken by remove with %d thread: %lld nsec\n", thread_count, end - start);
     // printk("\n");
 
     return 0;
@@ -208,7 +213,7 @@ int run_multi_thread_remove(int thread_count)
 void rbtree_test(void)
 {
     int i;
-    int threads_num[5] = {1, 2, 4, 8, 16};
+    int threads_num[3] = {1, 2, 4};
     int num_processes_i = 1;
     int num_processes_r = 1;
     int thread_num;
