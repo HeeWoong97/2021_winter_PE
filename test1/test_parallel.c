@@ -88,8 +88,9 @@ int run_multi_thread_insert(int thread_count)
 
     start = ktime_get();
 
+	finish = -thread_count;
 	// finish = -4;
-    thread_count--;
+    // thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i] = i;
         // printk("arg: %ld (i: %d)\n", arg[i + 1], i);
@@ -97,20 +98,28 @@ int run_multi_thread_insert(int thread_count)
     }
 
     // printk("starting run_insert(0) (PID: %d)\n", current->pid);
-    arg[thread_count] = thread_count;
-    run_insert(&arg[thread_count]);    
+    // arg[thread_count] = thread_count;
+    // run_insert(&arg[thread_count]);    
 
     // while (__sync_fetch_and_add(&finish, 0)) {
-    while (finish != thread_count + 1) {   
-		msleep(1);
-    }
+    // while (finish != thread_count + 1) {   
+	// 	msleep(1);
+    // }
     // finish = -4;
-	finish = 0;
+	// finish = 0;
     // printk("finish sleep (PID: %d)\n", current->pid);
 
-    end = ktime_get();
+	while (__sync_fetch_and_add(&finish, 0)) {
+		udelay(100);
+	}
 
-	msleep(1);
+	if (!__sync_fetch_and_add(&finish, 0)) {
+		end = ktime_get();
+	}
+
+    // end = ktime_get();
+
+	// msleep(1);
 	for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
@@ -158,25 +167,34 @@ int run_multi_thread_remove(int thread_count)
     start = ktime_get();
 
 	// finish = -4;
-    thread_count--;
+	finish = -thread_count;
+    // thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i] = i;
         thread[i] = kthread_run(&run_remove, &arg[i], "remove");
     }
 
-    arg[thread_count] = thread_count;
-    run_remove(&arg[thread_count]);
+    // arg[thread_count] = thread_count;
+    // run_remove(&arg[thread_count]);
 
     // while (__sync_fetch_and_add(&finish, 0)) {
-	while (finish != thread_count + 1) { 
-		msleep(1);
-    }
+	// while (finish != thread_count + 1) { 
+	// 	msleep(1);
+    // }
     // finish = -4;
-	finish = 0;
+	// finish = 0;
 
-    end = ktime_get();
+	while (__sync_fetch_and_add(&finish, 0)) {
+		udelay(100);
+	}
 
-	msleep(1);
+	if (!__sync_fetch_and_add(&finish, 0)) {
+		end = ktime_get();	
+	}
+
+    // end = ktime_get();
+
+	// msleep(1);
     for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
