@@ -66,10 +66,10 @@ int run_insert(void *arg)
         rb_insert(root, element, data);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
-	printk("before finish: %d (PID: %d)", finish, current->pid);
+	// printk("before finish: %d (PID: %d)", finish, current->pid);
     __sync_fetch_and_add(&finish, 1);
 	// finish++;
-	printk("after finish: %d (PID: %d)", finish, current->pid);
+	// printk("after finish: %d (PID: %d)", finish, current->pid);
     // printk("\n");
 
     return 0;
@@ -86,7 +86,7 @@ int run_multi_thread_insert(int thread_count)
 
     size_per_thread = total_size / thread_count;
 
-    start = ktime_get_ns();
+    start = ktime_get();
 
 	// finish = -4;
     thread_count--;
@@ -108,7 +108,7 @@ int run_multi_thread_insert(int thread_count)
 	finish = 0;
     // printk("finish sleep (PID: %d)\n", current->pid);
 
-    end = ktime_get_ns();
+    end = ktime_get();
 
 	msleep(1);
 	for (i = 0; i < thread_count; i++) {
@@ -155,7 +155,7 @@ int run_multi_thread_remove(int thread_count)
     
     size_per_thread = total_size / thread_count;
 
-    start = ktime_get_ns();
+    start = ktime_get();
 
 	// finish = -4;
     thread_count--;
@@ -174,7 +174,7 @@ int run_multi_thread_remove(int thread_count)
     // finish = -4;
 	finish = 0;
 
-    end = ktime_get_ns();
+    end = ktime_get();
 
 	msleep(1);
     for (i = 0; i < thread_count; i++) {
@@ -197,7 +197,7 @@ void rbtree_test(void)
 
     generate_data();
     printk("total_size: %d\n", total_size);
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 3; i++) {
         thread_num = threads_num[i];
         // thread_num = 4;
         num_processes_r = num_processes_i = thread_num;
@@ -205,7 +205,7 @@ void rbtree_test(void)
         root = rb_init();
 
         run_multi_thread_insert(num_processes_i);
-        // run_multi_thread_remove(num_processes_r);
+        run_multi_thread_remove(num_processes_r);
     }
 
     printk("\n");
