@@ -23,7 +23,6 @@ int numbers[NUM_OF_DATA];
 tree_node *root;
 int sleep_time = 0;
 
-bool shuffle = true;
 int finish;
 
 extern struct mutex show_tree_lock;
@@ -39,15 +38,12 @@ void generate_data(void)
         numbers[i] = i + 1;
         total_size++;
     }
-	if (shuffle) {
-		for (i = 0; i < NUM_OF_DATA - 1; i++) {
-			get_random_bytes(&random, sizeof(int));
-			j = random % NUM_OF_DATA;
-			// printk("j: %d", j);
-			tmp = numbers[j];
-			numbers[j] = numbers[i];
-			numbers[i] = tmp;
-		}
+	for (i = 0; i < NUM_OF_DATA - 1; i++) {
+		get_random_bytes(&random, sizeof(int));
+		j = random % NUM_OF_DATA;
+		tmp = numbers[j];
+		numbers[j] = numbers[i];
+		numbers[i] = tmp;
 	}
 }
 
@@ -62,82 +58,51 @@ int run_insert(void *arg)
 
     p = numbers + data * size_per_thread;
     start = p;
-    // printk("*data(thread_index): %ld (PID: %d)\n", data, current->pid);
     count = size_per_thread;
 
     for (i = 0; i < count; i++) {
         element = start[i];
-		// printk("insert %d (PID: %d)", element, current->pid);
-        // printk("inserting element: %d (PID: %d)\n", element, current->pid);
         rb_insert(root, element, data);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
-	// printk("before finish: %d (PID: %d)", finish, current->pid);
     __sync_fetch_and_add(&finish, 1);
-	// finish++;
-	// printk("after finish: %d (PID: %d)", finish, current->pid);
-    // printk("\n");
 
     return 0;
 }
 
-int run_multi_thread_insert(int thread_count)
+int run_multi_thread_insert(int thread_count, int num_of_data)
 {
     int i;
-    // ktime_t start, end;
     struct task_struct *thread[16];
     long arg[16];
 	struct timespec64 spclock[2];
 	unsigned long long time = 0;
 	unsigned long long count = 0;
 
-    // printk("Enter run multi thread insert (PID: %d)", current->pid);
+    size_per_thread = num_of_data / thread_count;
 
-    size_per_thread = total_size / thread_count;
-
-    // start = ktime_get();
 	ktime_get_ts64(&spclock[0]);
 
 	finish = -thread_count;
-	// finish = -4;
-    // thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i] = i;
-        // printk("arg: %ld (i: %d)\n", arg[i + 1], i);
         thread[i] = kthread_run(&run_insert, &arg[i], "insert");
     }
-
-    // printk("starting run_insert(0) (PID: %d)\n", current->pid);
-    // arg[thread_count] = thread_count;
-    // run_insert(&arg[thread_count]);    
-
-    // while (__sync_fetch_and_add(&finish, 0)) {
-    // while (finish != thread_count + 1) {   
-	// 	msleep(1);
-    // }
-    // finish = -4;
-	// finish = 0;
-    // printk("finish sleep (PID: %d)\n", current->pid);
 
 	while (__sync_fetch_and_add(&finish, 0)) {
 		udelay(100);
 	}
 
 	if (!__sync_fetch_and_add(&finish, 0)) {
-		// end = ktime_get();
 		ktime_get_ts64(&spclock[1]);
 		calclock(spclock, &time, &count);
 	}
 
-    // end = ktime_get();
-
-	// msleep(1);
 	for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
 
     printk("time taken by insert with %d thread: %lld nsec\n", thread_count, time);
-    // printk("\n");
 
     return 0;
 }
@@ -157,93 +122,75 @@ int run_remove(void *arg)
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        // printk("removing element: %d (PID: %d)\n", element, current->pid);
         rb_remove(root, element, data);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
     __sync_fetch_and_add(&finish, 1);
-    // printk("\n");
 
     return 0;
 }
 
-int run_multi_thread_remove(int thread_count)
+int run_multi_thread_remove(int thread_count, int num_of_data)
 {
     int i;
-    // ktime_t start, end;
     struct task_struct *thread[16];
     long arg[16];
 	struct timespec64 spclock[2];
 	unsigned long long time = 0;
 	unsigned long long count = 0;
 
-    size_per_thread = total_size / thread_count;
+    size_per_thread = num_of_data / thread_count;
 
-    // start = ktime_get();
 	ktime_get_ts64(&spclock[0]);
 
-	// finish = -4;
 	finish = -thread_count;
-    // thread_count--;
     for (i = 0; i < thread_count; i++) {
         arg[i] = i;
         thread[i] = kthread_run(&run_remove, &arg[i], "remove");
     }
-
-    // arg[thread_count] = thread_count;
-    // run_remove(&arg[thread_count]);
-
-    // while (__sync_fetch_and_add(&finish, 0)) {
-	// while (finish != thread_count + 1) { 
-	// 	msleep(1);
-    // }
-    // finish = -4;
-	// finish = 0;
 
 	while (__sync_fetch_and_add(&finish, 0)) {
 		udelay(100);
 	}
 
 	if (!__sync_fetch_and_add(&finish, 0)) {
-		// end = ktime_get();
 		ktime_get_ts64(&spclock[1]);
 		calclock(spclock, &time, &count);
 	}
 
-    // end = ktime_get();
-
-	// msleep(1);
     for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
 
     printk("time taken by remove with %d thread: %llu nsec\n", thread_count, time);
-    // printk("\n");
 
     return 0;
 }
 
 void rbtree_test(void)
 {
-    int i;
+    int i, j;
     int threads_num[3] = {1, 2, 4};
+	int data[4] = {25000, 50000, 75000, 100000};
     int num_processes_i = 1;
     int num_processes_r = 1;
     int thread_num;
 
     generate_data();
-    printk("total_size: %d\n", total_size);
-    for (i = 0; i < 3; i++) {
-        thread_num = threads_num[i];
-        // thread_num = 4;
-        num_processes_r = num_processes_i = thread_num;
+	for (j = 0; j < 4; j++) {
+		printk("total_size: %d\n", data[j]);
+		for (i = 0; i < 3; i++) {
+			thread_num = threads_num[i];
+			// thread_num = 4;
+			num_processes_r = num_processes_i = thread_num;
 
-        root = rb_init();
+			root = rb_init();
 
-        run_multi_thread_insert(num_processes_i);
-        run_multi_thread_remove(num_processes_r);
-    }
-
+			run_multi_thread_insert(num_processes_i, data[j]);
+			run_multi_thread_remove(num_processes_r, data[j]);
+		}
+		printk("\n");
+	}
     printk("\n");
 }
 
