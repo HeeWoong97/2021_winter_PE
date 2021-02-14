@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "calclock.h"
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -83,15 +84,19 @@ int run_insert(void *arg)
 int run_multi_thread_insert(int thread_count)
 {
     int i;
-    ktime_t start, end;
+    // ktime_t start, end;
     struct task_struct *thread[16];
     long arg[16];
-    
+	struct timespec64 spclock[2];
+	unsigned long long time = 0;
+	unsigned long long count = 0;
+
     // printk("Enter run multi thread insert (PID: %d)", current->pid);
 
     size_per_thread = total_size / thread_count;
 
-    start = ktime_get();
+    // start = ktime_get();
+	ktime_get_ts64(&spclock[0]);
 
 	finish = -thread_count;
 	// finish = -4;
@@ -119,7 +124,9 @@ int run_multi_thread_insert(int thread_count)
 	}
 
 	if (!__sync_fetch_and_add(&finish, 0)) {
-		end = ktime_get();
+		// end = ktime_get();
+		ktime_get_ts64(&spclock[1]);
+		calclock(spclock, &time, &count);
 	}
 
     // end = ktime_get();
@@ -129,7 +136,7 @@ int run_multi_thread_insert(int thread_count)
         kthread_stop(thread[i]);
     }
 
-    printk("time taken by insert with %d thread: %lld nsec\n", thread_count, end - start);
+    printk("time taken by insert with %d thread: %lld nsec\n", thread_count, time);
     // printk("\n");
 
     return 0;
@@ -163,13 +170,17 @@ int run_remove(void *arg)
 int run_multi_thread_remove(int thread_count)
 {
     int i;
-    ktime_t start, end;
+    // ktime_t start, end;
     struct task_struct *thread[16];
     long arg[16];
-    
+	struct timespec64 spclock[2];
+	unsigned long long time = 0;
+	unsigned long long count = 0;
+
     size_per_thread = total_size / thread_count;
 
-    start = ktime_get();
+    // start = ktime_get();
+	ktime_get_ts64(&spclock[0]);
 
 	// finish = -4;
 	finish = -thread_count;
@@ -194,7 +205,9 @@ int run_multi_thread_remove(int thread_count)
 	}
 
 	if (!__sync_fetch_and_add(&finish, 0)) {
-		end = ktime_get();	
+		// end = ktime_get();
+		ktime_get_ts64(&spclock[1]);
+		calclock(spclock, &time, &count);
 	}
 
     // end = ktime_get();
@@ -204,7 +217,7 @@ int run_multi_thread_remove(int thread_count)
         kthread_stop(thread[i]);
     }
 
-    printk("time taken by remove with %d thread: %lld nsec\n", thread_count, end - start);
+    printk("time taken by remove with %d thread: %llu nsec\n", thread_count, time);
     // printk("\n");
 
     return 0;

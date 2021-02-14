@@ -1,6 +1,6 @@
 obj-m		:= calclock.o
 
-KERNEL_DIR	:= /lib/module/$(shell uname -r)/build
+KERNEL_DIR	:= /lib/modules/$(shell uname -r)/build
 PWD			:= $(shell pwd)
 
 default:
