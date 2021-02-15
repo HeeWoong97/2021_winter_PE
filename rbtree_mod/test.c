@@ -14,16 +14,22 @@ bool remove_dbg = true;
 
 void rbtree_test(void)
 {
+	int i;
     tree_node *root = rb_init();
+	
+	for (i = 0; i < 100000; i++) {
+		rb_insert(root, i, 0);
+	}
 
-    rb_insert(root, 3);
-    rb_insert(root, 5);
-    rb_insert(root, 15);
-    rb_insert(root, 1);
-    rb_insert(root, 2);
+	/*
+    rb_insert(root, 3, 0);
+    rb_insert(root, 5, 0);
+    rb_insert(root, 15, 0);
+    rb_insert(root, 1, 0);
+    rb_insert(root, 2, 0);
     // show_tree(root);
-    rb_insert(root, 7);
-    rb_insert(root, 6);
+    rb_insert(root, 7, 0);
+    rb_insert(root, 6, 0);
     show_tree(root);
     // rb_remove(root, 2);
     // show_tree(root);
@@ -31,6 +37,7 @@ void rbtree_test(void)
     // show_tree(root);
     // rb_remove(root, 3);
     // show_tree(root);
+	*/
 }
 
 static int __init rbtree_mod_init(void)

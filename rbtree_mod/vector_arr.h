@@ -1,7 +1,7 @@
 #ifndef __VECTOR_ARR_H__
 #define __VECTOR_ARR_H__
 
-#define VECTOR_CAPACITY     50
+#define VECTOR_CAPACITY     100
 
 typedef struct vector
 {
@@ -17,3 +17,5 @@ void vector_delete(vector *v, int index);
 void vector_clear(vector *v);
 
 #endif
+
+
