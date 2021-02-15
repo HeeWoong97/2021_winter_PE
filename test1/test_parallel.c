@@ -63,7 +63,6 @@ int run_insert(void *arg)
     for (i = 0; i < count; i++) {
         element = start[i];
         rb_insert(root, element, data);
-        dbg_printf("[RUN] finish inserting element %d\n", element);
     }
     __sync_fetch_and_add(&finish, 1);
 
