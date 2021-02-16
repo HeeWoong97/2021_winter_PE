@@ -1,5 +1,5 @@
-obj-m	:= h.o
-h-objs	:= vector_arr.o calclock.o tree.o utils.o lockfree_utils.o test_parallel.o 
+obj-m		:= h.o
+h-objs		:= calclock.o test.o
 
 KERNEL_DIR	:= /lib/modules/$(shell uname -r)/build
 PWD			:= $(shell pwd)
