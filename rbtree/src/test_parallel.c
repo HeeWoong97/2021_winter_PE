@@ -14,6 +14,8 @@ int total_size = 0, size_per_thread = 0;
 int numbers[1000001];
 tree_node *root;
 
+int finish;
+
 bool remove_dbg = false; // dbg_printf
 extern pthread_mutex_t show_tree_lock;
 
@@ -64,6 +66,8 @@ void *run_insert(void *i)
         rb_insert(root, element);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
+	__sync_fetch_and_add(&finish, 1);
+
     return NULL;
 }
 
@@ -78,17 +82,34 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
 
 	clock_gettime(CLOCK_REALTIME, &spclock[0]);
 
+	finish = -thread_count;
     for (int i = 0; i < thread_count; i++) {
         pthread_create(&tid[i], NULL, run_insert, (void *)(i));
     }
 
+	/*
     for (int i = 0; i < thread_count; i++) {
         pthread_join(tid[i], NULL);
     }
 
     clock_gettime(CLOCK_REALTIME, &spclock[1]);
 	calclock(spclock, &time, &count);
-    printf("time taken by insert with %d thread: %llu nsec\n", thread_count, time);
+    */
+
+	while (__sync_fetch_and_add(&finish, 0)) {
+		usleep(100);
+	}
+
+	if (!__sync_fetch_and_add(&finish, 0)) {
+		clock_gettime(CLOCK_REALTIME, &spclock[1]);
+		calclock(spclock, &time, &count);
+	}
+
+	for (int i = 0; i < thread_count; i++) {
+		pthread_cancel(tid[i]);
+	}
+
+	printf("time taken by insert with %d thread: %llu nsec\n", thread_count, time);
 
     return 0;
 }
@@ -104,6 +125,8 @@ void *run_remove(void *i)
         rb_remove(root, element);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
+	__sync_fetch_and_add(&finish, 1);
+
     return NULL;
 }
 
@@ -118,17 +141,34 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
 
 	clock_gettime(CLOCK_REALTIME, &spclock[0]);
 
+	finish = -thread_count;
     for (int i = 0; i < thread_count; i++) {
         pthread_create(&tid[i], NULL, run_remove, (void *)(i));
     }
 
+	/*
     for (int i = 0; i < thread_count; i++) {
         pthread_join(tid[i], NULL);
     }
 
 	clock_gettime(CLOCK_REALTIME, &spclock[1]);
 	calclock(spclock, &time, &count);
-    printf("time taken by remove with %d thread: %llu nsec\n", thread_count,  time);
+    */
+
+	while (__sync_fetch_and_add(&finish, 0)) {
+		usleep(100);
+	}
+
+	if (!__sync_fetch_and_add(&finish, 0)) {
+		clock_gettime(CLOCK_REALTIME, &spclock[1]);
+		calclock(spclock, &time, &count);
+	}
+
+	for (int i = 0; i < thread_count; i++) {
+		pthread_cancel(tid[i]);
+	}
+
+	printf("time taken by remove with %d thread: %llu nsec\n", thread_count,  time);
 
     return 0;
 }
