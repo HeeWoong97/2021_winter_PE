@@ -97,7 +97,7 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
     */
 
 	while (__sync_fetch_and_add(&finish, 0)) {
-		usleep(100);
+		// usleep(100);
 	}
 
 	if (!__sync_fetch_and_add(&finish, 0)) {
@@ -156,13 +156,13 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
     */
 
 	while (__sync_fetch_and_add(&finish, 0)) {
-		usleep(100);
+		// usleep(100);
 	}
 
-	if (!__sync_fetch_and_add(&finish, 0)) {
+	// if (!__sync_fetch_and_add(&finish, 0)) {
 		clock_gettime(CLOCK_REALTIME, &spclock[1]);
 		calclock(spclock, &time, &count);
-	}
+	// }
 
 	for (int i = 0; i < thread_count; i++) {
 		pthread_cancel(tid[i]);

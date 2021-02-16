@@ -89,13 +89,13 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
     }
 
 	while (__sync_fetch_and_add(&finish, 0)) {
-		udelay(100);
+		// udelay(100);
 	}
 
-	if (!__sync_fetch_and_add(&finish, 0)) {
+	// if (!__sync_fetch_and_add(&finish, 0)) {
 		ktime_get_ts64(&spclock[1]);
 		calclock(spclock, &time, &count);
-	}
+	// }
 
 	for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
@@ -149,13 +149,13 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
     }
 
 	while (__sync_fetch_and_add(&finish, 0)) {
-		udelay(100);
+		// udelay(100);
 	}
 
-	if (!__sync_fetch_and_add(&finish, 0)) {
+	// if (!__sync_fetch_and_add(&finish, 0)) {
 		ktime_get_ts64(&spclock[1]);
 		calclock(spclock, &time, &count);
-	}
+	// }
 
     for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
