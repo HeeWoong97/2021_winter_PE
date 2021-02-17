@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     generate_data();
 	for (int j = 0; j < 4; j++) {
 		printf("total_size: %d\n", data[j]);
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 2; i++) {
 			thread_num = threads_num[i];
 			num_processes_r = num_processes_i = thread_num;
 

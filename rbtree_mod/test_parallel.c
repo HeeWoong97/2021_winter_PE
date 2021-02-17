@@ -89,13 +89,13 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
     }
 
 	while (__sync_fetch_and_add(&finish, 0)) {
-		// udelay(100);
+		udelay(100);
 	}
 
-	// if (!__sync_fetch_and_add(&finish, 0)) {
+	if (!__sync_fetch_and_add(&finish, 0)) {
 		ktime_get_ts64(&spclock[1]);
 		calclock(spclock, &time, &count);
-	// }
+	}
 
 	for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
@@ -149,13 +149,13 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
     }
 
 	while (__sync_fetch_and_add(&finish, 0)) {
-		// udelay(100);
+		udelay(100);
 	}
 
-	// if (!__sync_fetch_and_add(&finish, 0)) {
+	if (!__sync_fetch_and_add(&finish, 0)) {
 		ktime_get_ts64(&spclock[1]);
 		calclock(spclock, &time, &count);
-	// }
+	}
 
     for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
@@ -178,7 +178,7 @@ void rbtree_test(void)
     generate_data();
 	for (j = 0; j < 4; j++) {
 		printk("total_size: %d\n", data[j]);
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < 2; i++) {
 			thread_num = threads_num[i];
 			// thread_num = 4;
 			num_processes_r = num_processes_i = thread_num;
