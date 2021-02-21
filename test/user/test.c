@@ -25,11 +25,15 @@ int main(void)
 	a = 1;
 
 	clock_gettime(CLOCK_REALTIME, &spclock1[0]);
-	print_global();
+	for (int i = 0; i < 10; i++) {
+		print_global();
+	}
 	clock_gettime(CLOCK_REALTIME, &spclock1[1]);
 
 	clock_gettime(CLOCK_REALTIME, &spclock2[0]);
-	print_local(n);
+	for (int i = 0; i < 10; i++) {
+		print_local(n);
+	}
 	clock_gettime(CLOCK_REALTIME, &spclock2[1]);
 
 	calclock(spclock1, &time1, &count1);

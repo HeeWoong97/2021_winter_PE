@@ -25,17 +25,23 @@ int __init test_mod_init(void)
 	unsigned long long time1, count1;
 	unsigned long long time2, count2;
 
+	int i;
+
 	int n = 1;
 	a = 1;
 
 	printk("module init...");
 
 	ktime_get_ts64(&spclock1[0]);
-	print_global();
+	for (i = 0; i < 10; i++) {
+		print_global();
+	}
 	ktime_get_ts64(&spclock1[1]);
 
 	ktime_get_ts64(&spclock2[0]);
-	print_local(n);
+	for (i = 0; i < 10; i++) {
+		print_local(n);
+	}
 	ktime_get_ts64(&spclock2[1]);
 
 	calclock(spclock1, &time1, &count1);

@@ -15,6 +15,7 @@ int numbers[1000001];
 tree_node *root;
 
 int finish;
+unsigned long long each_time;
 
 bool remove_dbg = false; // dbg_printf
 extern pthread_mutex_t show_tree_lock;
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
     generate_data();
 	for (int j = 0; j < 4; j++) {
 		printf("total_size: %d\n", data[j]);
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 3; i++) {
 			thread_num = threads_num[i];
 			num_processes_r = num_processes_i = thread_num;
 
@@ -61,11 +62,24 @@ void *run_insert(void *i)
     thread_index_init((long) i);
     int *start = p;
     int count = size_per_thread;
-    for (int i = 0; i < count; i++) {
+
+	struct timespec spclock[2];
+	unsigned long long time = 0;
+	unsigned long long cnt = 0;
+
+	clock_gettime(CLOCK_REALTIME, &spclock[0]);
+	for (int i = 0; i < count; i++) {
         int element = start[i];
         rb_insert(root, element);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
+	clock_gettime(CLOCK_REALTIME, &spclock[1]);
+
+	calclock(spclock, &time, &cnt);
+	// each_time += time;
+	__sync_fetch_and_add(&each_time, time);
+	printf("time taken to insert: %llu nsec\n", time);
+
 	__sync_fetch_and_add(&finish, 1);
 
     return NULL;
@@ -80,6 +94,7 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
 	unsigned long long time = 0;
 	unsigned long long count = 0;
 
+	each_time = 0;
 	clock_gettime(CLOCK_REALTIME, &spclock[0]);
 
 	finish = -thread_count;
@@ -100,16 +115,18 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
 		// usleep(100);
 	}
 
-	if (!__sync_fetch_and_add(&finish, 0)) {
+	// if (!__sync_fetch_and_add(&finish, 0)) {
 		clock_gettime(CLOCK_REALTIME, &spclock[1]);
 		calclock(spclock, &time, &count);
-	}
+	// }
 
 	for (int i = 0; i < thread_count; i++) {
 		pthread_cancel(tid[i]);
 	}
 
+	printf("time taken by only insertion: %llu nsec\n", each_time);
 	printf("time taken by insert with %d thread: %llu nsec\n", thread_count, time);
+	printf("difference: %llu nsec\n", time - each_time);
 
     return 0;
 }
@@ -120,11 +137,24 @@ void *run_remove(void *i)
     thread_index_init((long)i);
     int *start = p;
     int count = size_per_thread;
+
+	struct timespec spclock[2];
+	unsigned long long time = 0;
+	unsigned long long cnt = 0;
+
+	clock_gettime(CLOCK_REALTIME, &spclock[0]);
     for (int j = 0; j < count; j++) {
         int element = start[j];
         rb_remove(root, element);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
+	clock_gettime(CLOCK_REALTIME, &spclock[1]);
+
+	calclock(spclock, &time, &cnt);
+	// each_time += time;
+	__sync_fetch_and_add(&each_time, time);
+	printf("time taken to delete: %llu nsec\n", time);
+
 	__sync_fetch_and_add(&finish, 1);
 
     return NULL;
@@ -139,6 +169,7 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
 	unsigned long long time = 0;
 	unsigned long long count = 0;
 
+	each_time = 0;
 	clock_gettime(CLOCK_REALTIME, &spclock[0]);
 
 	finish = -thread_count;
@@ -168,7 +199,9 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
 		pthread_cancel(tid[i]);
 	}
 
+	printf("time taken by only remove: %llu nsec\n", each_time);
 	printf("time taken by remove with %d thread: %llu nsec\n", thread_count,  time);
+	printf("difference: %llu nsec\n", time - each_time);
 
     return 0;
 }
