@@ -59,18 +59,21 @@ int run_insert(void *arg)
     int count;
     int element;
     int i;
-    struct my_thread_data *data = arg;
 
-    p = numbers + data->num * size_per_thread;
+    struct my_thread_data *thread_data = arg;
+	struct completion *comp = thread_data->comp;
+	long data = (long)thread_data->num;
+
+    p = numbers + data * size_per_thread;
     start = p;
     count = size_per_thread;
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        rb_insert(root, element, (long)data->num);
+        rb_insert(root, element, data);
     }
 
-	complete(data->comp);
+	complete(comp);
 
     return 0;
 }
@@ -117,19 +120,22 @@ int run_remove(void *arg)
     int count;
     int element;
     int i;
-    struct my_thread_data *data = arg;
 
-    p = numbers + data->num * size_per_thread;
+    struct my_thread_data *thread_data = arg;
+	struct completion *comp = thread_data->comp;
+	long data = (long)thread_data->num;
+
+    p = numbers + data * size_per_thread;
     start = p;
     count = size_per_thread;
 
     for (i = 0; i < count; i++) {
         element = start[i];
-        rb_remove(root, element, (long)data->num);
+        rb_remove(root, element, data);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
 
-	complete(data->comp);
+	complete(comp);
 
     return 0;
 }
