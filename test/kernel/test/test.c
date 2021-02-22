@@ -4,51 +4,33 @@
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/sched.h>
-#include <linux/completion.h>
-
-struct my_thread_data
-{
-	struct completion *comp;
-	int num;
-};
 
 int foo(void *arg)
 {
 	int i;
-	struct my_thread_data *data = arg;
+	int data = *(int *)arg;
 
 	for (i = 0; i < 10000000; i++) {
-		data->num++;
+		data++;
 	}
-	printk("data->num: %d (PID: %d)", data->num, current->pid);
+	printk("data->num: %d (PID: %d)", data, current->pid);
 	printk("\n");
-
-	complete(data->comp);
 
 	return 0;
 }
 
 int __init test_mod_init(void)
 {
-	struct task_struct *threads[5];
-	struct completion comps[5];
-	struct my_thread_data data[5];
-
 	int i;
+	struct task_struct *threads[5];
+	int data[5];
 
 	printk("module init...");
 
 	for (i = 0; i < 5; i++) {
-		init_completion(&comps[i]);
-		data[i].comp = &comps[i];
-		data[i].num = i;
+		data[i] = i;
 		threads[i] = kthread_run(&foo, &data[i], "ThreadName");
-		printk("data[i].num: %d (PID: %d)", data[i].num, threads[i]->pid);
-	}
-
-	for (i = 0; i < 5; i++) {
-		wait_for_completion(&comps[i]);
-		kthread_stop(threads[i]);
+		printk("data[i].num: %d (PID: %d)", data[i], threads[i]->pid);
 	}
 
 	return 0;

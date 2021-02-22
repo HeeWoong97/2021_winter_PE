@@ -108,6 +108,10 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
 	ktime_get_ts64(&spclock[1]);
 	calclock(spclock, &time, &count);
 
+	for (i = 0; i < thread_count; i++) {
+		kthread_stop(thread[i]);
+	}
+
     printk("time taken by insert with %d thread: %lld nsec\n", thread_count, time);
 	
     return 0;
@@ -169,6 +173,10 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
 
 	ktime_get_ts64(&spclock[1]);
 	calclock(spclock, &time, &count);
+
+	for (i = 0; i < thread_count; i++) {
+		kthread_stop(thread[i]);
+	}
 
     printk("time taken by remove with %d thread: %llu nsec\n", thread_count, time);
 

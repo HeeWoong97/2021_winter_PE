@@ -24,7 +24,6 @@ tree_node *root;
 int sleep_time = 0;
 
 int finish;
-// unsigned long long each_time;
 
 extern struct mutex show_tree_lock;
 
@@ -57,24 +56,14 @@ int run_insert(void *arg)
     int i;
     long data = *(long *)arg;
 
-	// struct timespec64 spclock[2];
-	// unsigned long long time = 0;
-	// unsigned long long cnt = 0;
-
     p = numbers + data * size_per_thread;
     start = p;
     count = size_per_thread;
-
-	// ktime_get_ts64(&spclock[0]);
-    for (i = 0; i < count; i++) {
+    
+	for (i = 0; i < count; i++) {
         element = start[i];
         rb_insert(root, element, data);
     }
-	// ktime_get_ts64(&spclock[1]);
-
-	// calclock(spclock, &time, &cnt);
-	// __sync_fetch_and_add(&each_time, time);
-	// printk("time taken to insert: %llu nsec\n", time);
 
     __sync_fetch_and_add(&finish, 1);
 
@@ -92,7 +81,6 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
 
     size_per_thread = num_of_data / thread_count;
 
-	// each_time = 0;
 	ktime_get_ts64(&spclock[0]);
 
 	finish = -thread_count;
@@ -101,22 +89,16 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
         thread[i] = kthread_run(&run_insert, &arg[i], "insert");
     }
 
-	while (__sync_fetch_and_add(&finish, 0)) {
-		// udelay(100);
-	}
-
-	// if (!__sync_fetch_and_add(&finish, 0)) {
-		ktime_get_ts64(&spclock[1]);
-		calclock(spclock, &time, &count);
-	// }
+	while (__sync_fetch_and_add(&finish, 0))
+	
+	ktime_get_ts64(&spclock[1]);
+	calclock(spclock, &time, &count);
 
 	for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
 
-	// printk("time taken by only insertion: %llu nsec", each_time);
     printk("time taken by insert with %d thread: %lld nsec\n", thread_count, time);
-	// printk("difference: %llu nsec", time - each_time);
 	
     return 0;
 }
@@ -130,25 +112,15 @@ int run_remove(void *arg)
     int i;
     long data = *(long *)arg;
 
-	// struct timespec64 spclock[2];
-	// unsigned long long time = 0;
-	// unsigned long long cnt = 0;
-
     p = numbers + data * size_per_thread;
     start = p;
     count = size_per_thread;
 
-	// ktime_get_ts64(&spclock[0]);
     for (i = 0; i < count; i++) {
         element = start[i];
         rb_remove(root, element, data);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
-	// ktime_get_ts64(&spclock[1]);
-
-	// calclock(spclock, &time, &cnt);
-	// __sync_fetch_and_add(&each_time, time);
-	// printk("time taken to delete: %llu nsec", time);
 
     __sync_fetch_and_add(&finish, 1);
 
@@ -166,7 +138,6 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
 
     size_per_thread = num_of_data / thread_count;
 
-	// each_time = 0;
 	ktime_get_ts64(&spclock[0]);
 
 	finish = -thread_count;
@@ -175,22 +146,16 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
         thread[i] = kthread_run(&run_remove, &arg[i], "remove");
     }
 
-	while (__sync_fetch_and_add(&finish, 0)) {
-		// udelay(100);
-	}
+	while (__sync_fetch_and_add(&finish, 0)) 
 
-	// if (!__sync_fetch_and_add(&finish, 0)) {
-		ktime_get_ts64(&spclock[1]);
-		calclock(spclock, &time, &count);
-	// }
+	ktime_get_ts64(&spclock[1]);
+	calclock(spclock, &time, &count);
 
     for (i = 0; i < thread_count; i++) {
         kthread_stop(thread[i]);
     }
 
-	// printk("time taken by only remove: %llu nsec", each_time);
     printk("time taken by remove with %d thread: %llu nsec\n", thread_count, time);
-	// printk("difference: %llu nsec", time - each_time);
 
     return 0;
 }
@@ -209,7 +174,6 @@ void rbtree_test(void)
 		printk("total_size: %d\n", data[j]);
 		for (i = 0; i < 3; i++) {
 			thread_num = threads_num[i];
-			// thread_num = 4;
 			num_processes_r = num_processes_i = thread_num;
 
 			root = rb_init();

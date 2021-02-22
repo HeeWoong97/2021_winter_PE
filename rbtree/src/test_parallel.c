@@ -14,8 +14,7 @@ int total_size = 0, size_per_thread = 0;
 int numbers[1000001];
 tree_node *root;
 
-int finish;
-// unsigned long long each_time;
+// int finish;
 
 bool remove_dbg = false; // dbg_printf
 extern pthread_mutex_t show_tree_lock;
@@ -63,24 +62,13 @@ void *run_insert(void *i)
     int *start = p;
     int count = size_per_thread;
 
-	// struct timespec spclock[2];
-	//  unsigned long long time = 0;
-	// unsigned long long cnt = 0;
-
-	// clock_gettime(CLOCK_REALTIME, &spclock[0]);
 	for (int i = 0; i < count; i++) {
         int element = start[i];
         rb_insert(root, element);
         dbg_printf("[RUN] finish inserting element %d\n", element);
     }
-	// clock_gettime(CLOCK_REALTIME, &spclock[1]);
 
-	// calclock(spclock, &time, &cnt);
-	// each_time += time;
-	// __sync_fetch_and_add(&each_time, time);
-	// printf("time taken to insert: %llu nsec\n", time);
-
-	__sync_fetch_and_add(&finish, 1);
+	// __sync_fetch_and_add(&finish, 1);
 
     return NULL;
 }
@@ -94,30 +82,28 @@ int run_multi_thread_insert(int thread_count, int num_of_data)
 	unsigned long long time = 0;
 	unsigned long long count = 0;
 
-	// each_time = 0;
 	clock_gettime(CLOCK_REALTIME, &spclock[0]);
 
-	finish = -thread_count;
+	// finish = -thread_count;
     for (int i = 0; i < thread_count; i++) {
         pthread_create(&tid[i], NULL, run_insert, (void *)(i));
     }
+	
+	/*
+	while (__sync_fetch_and_add(&finish, 0)) 
 
-	while (__sync_fetch_and_add(&finish, 0)) {
-		// usleep(100);
-	}
-
-	// if (!__sync_fetch_and_add(&finish, 0)) {
-		clock_gettime(CLOCK_REALTIME, &spclock[1]);
-		calclock(spclock, &time, &count);
-	// }
+	clock_gettime(CLOCK_REALTIME, &spclock[1]);
+	calclock(spclock, &time, &count);
+	*/
 
 	for (int i = 0; i < thread_count; i++) {
 		pthread_join(tid[i], NULL);
 	}
 
-	// printf("time taken by only insertion: %llu nsec\n", each_time);
+	clock_gettime(CLOCK_REALTIME, &spclock[1]);
+	calclock(spclock, &time, &count);
+
 	printf("time taken by insert with %d thread: %llu nsec\n", thread_count, time);
-	// printf("difference: %llu nsec\n", time - each_time);
 
     return 0;
 }
@@ -129,24 +115,13 @@ void *run_remove(void *i)
     int *start = p;
     int count = size_per_thread;
 
-	// struct timespec spclock[2];
-	// unsigned long long time = 0;
-	// unsigned long long cnt = 0;
-
-	// clock_gettime(CLOCK_REALTIME, &spclock[0]);
     for (int j = 0; j < count; j++) {
         int element = start[j];
         rb_remove(root, element);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
-	// clock_gettime(CLOCK_REALTIME, &spclock[1]);
 
-	// calclock(spclock, &time, &cnt);
-	// each_time += time;
-	// __sync_fetch_and_add(&each_time, time);
-	// printf("time taken to delete: %llu nsec\n", time);
-
-	__sync_fetch_and_add(&finish, 1);
+	// __sync_fetch_and_add(&finish, 1);
 
     return NULL;
 }
@@ -160,39 +135,28 @@ int run_multi_thread_remove(int thread_count, int num_of_data)
 	unsigned long long time = 0;
 	unsigned long long count = 0;
 
-	// each_time = 0;
 	clock_gettime(CLOCK_REALTIME, &spclock[0]);
 
-	finish = -thread_count;
+	// finish = -thread_count;
     for (int i = 0; i < thread_count; i++) {
         pthread_create(&tid[i], NULL, run_remove, (void *)(i));
     }
 
 	/*
-    for (int i = 0; i < thread_count; i++) {
-        pthread_join(tid[i], NULL);
-    }
+	while (__sync_fetch_and_add(&finish, 0)) 
 
 	clock_gettime(CLOCK_REALTIME, &spclock[1]);
 	calclock(spclock, &time, &count);
-    */
-
-	while (__sync_fetch_and_add(&finish, 0)) {
-		// usleep(100);
-	}
-
-	// if (!__sync_fetch_and_add(&finish, 0)) {
-		clock_gettime(CLOCK_REALTIME, &spclock[1]);
-		calclock(spclock, &time, &count);
-	// }
+	*/
 
 	for (int i = 0; i < thread_count; i++) {
 		pthread_join(tid[i], NULL);
 	}
 
-	// printf("time taken by only remove: %llu nsec\n", each_time);
+	clock_gettime(CLOCK_REALTIME, &spclock[1]);
+	calclock(spclock, &time, &count);
+
 	printf("time taken by remove with %d thread: %llu nsec\n", thread_count,  time);
-	// printf("difference: %llu nsec\n", time - each_time);
 
     return 0;
 }
