@@ -14,7 +14,7 @@
 #include <linux/sched.h>
 #include <linux/completion.h>
 
-#define NUM_OF_DATA     100
+#define NUM_OF_DATA     100000
 
 bool remove_dbg = false;
 
