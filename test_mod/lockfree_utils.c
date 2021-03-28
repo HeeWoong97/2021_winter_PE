@@ -198,6 +198,7 @@ bool setup_local_area_for_delete(tree_node *y, tree_node *z, long thread_index)
     tree_node *wlc, *wrc;
 
     // the replace child, the actual target node
+    // x: node that will replace y(actual delete node)
     x = y->left_child;
     if (y->left_child->is_leaf)
         x = y->right_child;

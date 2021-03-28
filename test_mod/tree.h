@@ -14,18 +14,18 @@
 // extern long thread_index;
 extern bool remove_dbg; // for only debug remove
 
-// #define DEBUG
-// #ifdef DEBUG
-// #define dbg_printf(fmt, ...) \
-//         do {                 \
-//             if (remove_dbg)  \
-//                 printk("T[%ld] %s line:%d %s():" fmt, thread_index, \
-//                 __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-//         } while(0)
+#define DEBUG
+#ifdef DEBUG
+#define dbg_printf(fmt, ...) \
+        do {                 \
+            if (remove_dbg)  \
+                printk("T %s line:%d %s():" fmt, \
+                __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+        } while(0)
 
-// #else
+#else
 #define dbg_printf(...)
-// #endif
+#endif
 
 #define RED 0
 #define BLACK 1

@@ -13,18 +13,22 @@
 #include <linux/ktime.h>
 #include <linux/sched.h>
 #include <linux/completion.h>
+#include <linux/spinlock.h>
 
-#define NUM_OF_DATA     100000
+#define NUM_OF_DATA     10000
 
 bool remove_dbg = false;
 
 int total_size = 0; 
 int size_per_thread = 0;
 int numbers[NUM_OF_DATA];
+
 tree_node *root;
+
 int sleep_time = 0;
 
 extern struct mutex show_tree_lock;
+spinlock_t remove_lock;
 
 struct my_thread_data
 {
@@ -68,6 +72,7 @@ int run_insert(void *arg)
     start = p;
     count = size_per_thread;
 
+	printk("Starting insert... (PID : %d)", current->pid);
     for (i = 0; i < count; i++) {
         element = start[i];
         rb_insert(root, element, data);
@@ -133,9 +138,12 @@ int run_remove(void *arg)
     start = p;
     count = size_per_thread;
 
+	printk("Starting delete... (PID : %d)", current->pid);
     for (i = 0; i < count; i++) {
         element = start[i];
+        spin_lock(&remove_lock);
         rb_remove(root, element, data);
+        spin_unlock(&remove_lock);
         dbg_printf("[RUN] finish removing element %d\n", element);
     }
 
@@ -187,23 +195,26 @@ void rbtree_test(void)
 {
     int i, j;
     int threads_num[3] = {1, 2, 4};
-	int data[4] = {25000, 50000, 75000, 100000};
-    int num_processes_i = 1;
+	// int data[4] = {25000, 50000, 75000, 100000};
+    int data[4] = {2500, 5000, 7500, 10000};
+    // int data[4] = {200, 400, 800, 1000};
+	// int data[4] = {20, 40, 80, 100};
+	int num_processes_i = 1;
     int num_processes_r = 1;
     int thread_num;
 
     generate_data();
-	for (j = 0; j < 4; j++) {
-		printk("total_size: %d\n", data[j]);
-		for (i = 0; i < 3; i++) {
-			thread_num = threads_num[i];
+	for (i = 0; i < 4; i++) {
+		printk("total_size: %d\n", data[i]);
+		for (j = 0; j < 3; j++) {
+			thread_num = threads_num[j];
 			// thread_num = 4;
 			num_processes_r = num_processes_i = thread_num;
 
 			root = rb_init();
 
-			run_multi_thread_insert(num_processes_i, data[j]);
-			run_multi_thread_remove(num_processes_r, data[j]);
+			run_multi_thread_insert(num_processes_i, data[i]);
+			run_multi_thread_remove(num_processes_r, data[i]);
 		}
 		printk("\n");
 	}
