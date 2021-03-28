@@ -15,7 +15,7 @@
 #include <linux/completion.h>
 #include <linux/spinlock.h>
 
-#define NUM_OF_DATA     10000
+#define NUM_OF_DATA     100000
 
 bool remove_dbg = false;
 
@@ -28,6 +28,7 @@ tree_node *root;
 int sleep_time = 0;
 
 extern struct mutex show_tree_lock;
+spinlock_t insert_lock;
 spinlock_t remove_lock;
 
 struct my_thread_data
@@ -75,7 +76,9 @@ int run_insert(void *arg)
 	printk("Starting insert... (PID : %d)", current->pid);
     for (i = 0; i < count; i++) {
         element = start[i];
+        // spin_lock(&insert_lock);
         rb_insert(root, element, data);
+        // spin_unlock(&insert_lock);
     }
 
 	complete(comp);
@@ -195,8 +198,8 @@ void rbtree_test(void)
 {
     int i, j;
     int threads_num[3] = {1, 2, 4};
-	// int data[4] = {25000, 50000, 75000, 100000};
-    int data[4] = {2500, 5000, 7500, 10000};
+	int data[4] = {25000, 50000, 75000, 100000};
+    // int data[4] = {2500, 5000, 7500, 10000};
     // int data[4] = {200, 400, 800, 1000};
 	// int data[4] = {20, 40, 80, 100};
 	int num_processes_i = 1;
