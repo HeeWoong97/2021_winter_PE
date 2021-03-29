@@ -8,10 +8,12 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/types.h>
+#include <linux/spinlock.h>
 
 // extern long thread_index;
 
 extern int cnt;
+spinlock_t remove_lock;
 
 /**
  * initialize red-black tree and return its root
@@ -369,6 +371,8 @@ void rb_remove(tree_node *root, int value, long thread_index)
     tree_node *y; // actual delete node
     tree_node *replace_node;
 
+    spin_lock(&remove_lock);
+
     dbg_printf("[Remove] thread %ld value %d\n", thread_index, value);
     // init thread local nodes with flag
     clear_local_area(thread_index);
@@ -401,6 +405,7 @@ restart:
     
     // unlink y from the tree
     replace_node = replace_parent(root, y);
+    spin_unlock(&remove_lock);   
 
     // replace the value
     if (y != z)
@@ -419,8 +424,8 @@ restart:
     while (!release_markers_above(replace_node->parent, z, thread_index))
         ;
 
-    clear_local_area(thread_index);
-    
+    clear_local_area(thread_index); 
+
     dbg_printf("[Remove] node with value %d complete.\n", value);
     free_node(y);
 }
