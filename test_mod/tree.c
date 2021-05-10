@@ -371,12 +371,13 @@ void rb_remove(tree_node *root, int value, long thread_index)
     tree_node *y; // actual delete node
     tree_node *replace_node;
 
+    spin_lock(&remove_lock);
+
     dbg_printf("[Remove] thread %ld value %d\n", thread_index, value);
     // init thread local nodes with flag
     clear_local_area(thread_index);
 restart:
 
-    spin_lock(&remove_lock);
     z = par_find(root, value);
     if (z == NULL)
         return;
@@ -388,6 +389,7 @@ restart:
     
     if (y == NULL) {
         z->flag = false;
+        spin_unlock(&remove_lock);
         goto restart;
     }
     
@@ -398,11 +400,11 @@ restart:
         // release flags
         y->flag = false;
         if (y != z) z->flag = false;
+        spin_unlock(&remove_lock);
         goto restart; // deletion failed, try again
     }
     dbg_printf("[Remove] actual node with value %d\n", y->value);
     
-    spin_lock(&remove_lock);
     // unlink y from the tree
     replace_node = replace_parent(root, y); 
 

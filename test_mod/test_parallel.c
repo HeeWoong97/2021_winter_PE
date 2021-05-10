@@ -28,8 +28,6 @@ tree_node *root;
 int sleep_time = 0;
 
 extern struct mutex show_tree_lock;
-spinlock_t insert_lock;
-// spinlock_t remove_lock;
 
 struct my_thread_data
 {
@@ -76,9 +74,7 @@ int run_insert(void *arg)
 	printk("Starting insert... (PID : %d)", current->pid);
     for (i = 0; i < count; i++) {
         element = start[i];
-        spin_lock(&insert_lock);
 		rb_insert(root, element, data);
-		spin_unlock(&insert_lock);
     }
 
 	complete(comp);
@@ -144,9 +140,7 @@ int run_remove(void *arg)
 	printk("Starting delete... (PID : %d)", current->pid);
     for (i = 0; i < count; i++) {
         element = start[i];
-        // spin_lock(&remove_lock);
         rb_remove(root, element, data);
-        // spin_unlock(&remove_lock);
     }
 
 	complete(comp);
