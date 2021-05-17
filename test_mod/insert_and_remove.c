@@ -15,7 +15,7 @@
 #include <linux/completion.h>
 #include <linux/spinlock.h>
 
-#define NUM_OF_DATA     100000
+#define NUM_OF_DATA     100
 #define NUM_OF_THREAD   4
 
 bool remove_dbg = false;
@@ -63,11 +63,14 @@ int thread_func(void *arg)
             break;
         }
         element = numbers[__sync_fetch_and_add(&count, 1)];
+        printk("Thread#%ld, count=%d, element=%d\n", thread_index, count, element);
         rb_insert(root, element, thread_index);
+        printk("Thread#%ld, inserted %d", thread_index, element);
         get_random_bytes(&random, sizeof(int));
         random %= 1000;
         udelay(random);
         rb_remove(root, element, thread_index);
+        printk("Thread#%ld, removed %d", thread_index, element);
     }
 
     complete(comp);
@@ -115,6 +118,7 @@ int run_multi_thread_insert_and_remove(int thread_count)
 void rbtree_test(void)
 {
     generate_data();
+    root = rb_init();
     run_multi_thread_insert_and_remove(NUM_OF_THREAD);
 }
 
